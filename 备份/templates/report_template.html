@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目开发日报 - {{ report_date }}</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: transparent; }
+    h1, h2 { color: #0052cc; }
+    h1 { text-align: center; margin-bottom: 5px; }
+    h2 { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 0px; font-size: 1.5rem; }
+    .card { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); padding: 20px; margin-bottom: 20px; }
+    .main-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-col-full { grid-column: span 2; }
+    .kpi-grid-container { display: grid; grid-template-columns: repeat(10, 1fr); gap: 20px; }
+    .kpi-card-large { grid-column: span 5; background-color: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+    .kpi-card-small { grid-column: span 2; background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+    .kpi-title-large { font-size: 1.2rem; font-weight: 600; color: #555; }
+    .kpi-value-large { font-size: 3rem; font-weight: bold; margin: 10px 0; }
+    .kpi-context { font-size: 1rem; color: #777; }
+    .kpi-title-small { font-size: 0.9rem; font-weight: 600; color: #555; }
+    .kpi-value-small { font-size: 1.8rem; font-weight: bold; margin: 8px 0; }
+    .kpi-context-small { font-size: 0.8rem; color: #777; }
+    .analysis-wrapper h4 { font-size: 1.1rem; color: #333; margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    .analysis-wrapper ul, .analysis-wrapper ol { padding-left: 25px; line-height: 1.7; }
+    .analysis-wrapper li { margin-bottom: 10px; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #666; }
+    .collapsible-table summary { font-weight: bold; cursor: pointer; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; margin-top: 10px; }
+    tfoot input { width: 100%; padding: 3px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>项目开发日报</h1>
+        <p style="text-align: center; color: #666;">报告生成时间: {{ report_date }} | 数据来源: {{ context.data_file }}</p>
+
+        {% set kpis = context.analysis.kpis %}
+        {# 预先定义颜色变量以避免linter在style属性中报错 #}
+        {% set blocker_color = '#dc3545' if kpis.a_blocker_count > 0 else '#28a745' %}
+        
+        <div class="card">
+            <h2><i class="fas fa-tachometer-alt"></i> 关键指标摘要</h2>
+            <div class="kpi-grid-container">
+                <div class="kpi-card-large">
+                    <div class="kpi-title-large">收敛偏差</div>
+                    {% if kpis.convergence_deviation and kpis.convergence_deviation > 0 %}
+                    <div class="kpi-value-large" style="color: #dc3545;">
+                        <i class="fas fa-arrow-up"></i> +{{ kpis.convergence_deviation }}
+                    </div>
+                    <div class="kpi-context">落后计划 {{ kpis.convergence_deviation }} 个</div>
+                    {% elif kpis.convergence_deviation is not none %}
+                    <div class="kpi-value-large" style="color: #28a745;">
+                        <i class="fas fa-arrow-down"></i> {{ kpis.convergence_deviation }}
+                    </div>
+                    <div class="kpi-context">领先计划 {{ kpis.convergence_deviation|abs }} 个</div>
+                    {% else %}
+                    <div class="kpi-value-large">-</div>
+                    <div class="kpi-context">当前不在收敛计划周期内</div>
+                    {% endif %}
+                </div>
+                <div class="kpi-card-large">
+                    <div class="kpi-title-large">A类问题7日变化</div>
+                     {% if kpis.a_issues_7_day_change > 0 %}
+                    <div class="kpi-value-large" style="color: #dc3545;">
+                        <i class="fas fa-chart-line"></i> +{{ kpis.a_issues_7_day_change }}
+                    </div>
+                     {% else %}
+                     <div class="kpi-value-large" style="color: #28a745;">
+                        <i class="fas fa-chart-line"></i> {{ kpis.a_issues_7_day_change }}
+                    </div>
+                     {% endif %}
+                    <div class="kpi-context">{{ '有历史数据对比' if kpis.a_issues_7_day_change_has_history else '历史数据不足7天' }}</div>
+                </div>
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">JIRA总数量</div>
+                    <div class="kpi-value-small">{{ kpis.total_issues }}</div>
+                </div>
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">A/B/C 分布</div>
+                    <div class="kpi-value-small" style="font-size: 1.2rem;">{{ kpis.priority_distribution_summary }}</div>
+                     <div class="kpi-context-small">高优问题(A类)占比 {{ kpis.a_priority_percentage }}%</div>
+                </div>
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">A类 Blocker</div>
+                    <div class="kpi-value-small">{{ kpis.a_blocker_count }}</div>
+                    <div class="kpi-context-small" style="color: {{ blocker_color }}">{{ '有紧急阻断项' if kpis.a_blocker_count > 0 else '无紧急阻断' }}</div>
+                </div>
+                {% if kpis.riskiest_module %}
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">风险最集中模块</div>
+                    <div class="kpi-value-small" style="font-size: 1.2rem;">{{ kpis.riskiest_module.name }}</div>
+                    <div class="kpi-context-small">贡献了 {{ kpis.riskiest_module.percentage_of_total_risk }}% 的高风险问题</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="analysis-wrapper card">
+             <h2><i class="fas fa-microscope"></i> 数据分析与建议</h2>
+             <h4>1. 客观分析</h4>
+             {{ context.analysis.generated_text.objective_analysis|safe }}
+             <h4>2. 行动建议</h4>
+             {{ context.analysis.generated_text.actionable_recommendations|safe }}
+        </div>
+
+        <div class="main-grid">
+            {% if context.charts.burnup_chart_html %}
+            <div class="grid-col-full card">
+                <h2><i class="fas fa-rocket"></i> 项目收敛燃尽图</h2>
+                <div class="chart-container" style="text-align:center;">
+                    {{ context.charts.burnup_chart_html|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="grid-col-full card">
+                <h2><i class="fas fa-chart-line"></i> 问题趋势与分布</h2>
+                <div class="chart-container" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                    {% if context.charts.trend_chart_html %}
+                    <div class="chart-item" style="flex: 1; min-width: 400px;">
+                        {{ context.charts.trend_chart_html|safe }}
+                    </div>
+                    {% endif %}
+                    {% if context.charts.module_dist_html %}
+                    <div class="chart-item" style="flex: 1; min-width: 400px;">
+                        {{ context.charts.module_dist_html|safe }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="grid-col-full card">
+                <h2><i class="fas fa-exclamation-triangle"></i> 高风险问题清单</h2>
+                <details class="collapsible-table" open>
+                    <summary>超期问题 ({{ context.analysis.overdue_issues|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.overdue_issues %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </thead>
+                             <tfoot>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </tfoot>
+                            <tbody>
+                            {% for issue in context.analysis.overdue_issues %}
+                                <tr>
+                                    <td>{{ issue.key }}</td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td>{{ issue.age }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>当前无超期问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table" open>
+                    <summary>A类问题 ({{ context.analysis.a_priority_issues|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.a_priority_issues %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </thead>
+                             <tfoot>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </tfoot>
+                            <tbody>
+                            {% for issue in context.analysis.a_priority_issues %}
+                                <tr>
+                                    <td>{{ issue.key }}</td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td>{{ issue.age }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>当前无A类问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+
+                <details class="collapsible-table">
+                    <summary>重点标签问题 ({{ context.analysis.tagged_issues|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.tagged_issues %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Tags</th><th>Age(days)</th></tr>
+                            </thead>
+                            <tfoot>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Tags</th><th>Age(days)</th></tr>
+                            </tfoot>
+                            <tbody>
+                            {% for issue in context.analysis.tagged_issues %}
+                                <tr>
+                                    <td>{{ issue.key }}</td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td>{{ issue.tags }}</td>
+                                    <td>{{ issue.age }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>当前无匹配重点标签的问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>由 JIRA 分析助手自动生成</p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $('.risk-table-datatable').each(function() {
+            var table = $(this).DataTable({
+                "pageLength": 10,
+                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "全部"] ],
+                "language": {
+                    "search": "全局筛选:", "lengthMenu": "每页显示 _MENU_ 条", "zeroRecords": "未找到匹配的记录",
+                    "info": "显示第 _START_ 至 _END_ 条，共 _TOTAL_ 条", "infoEmpty": "显示 0 条记录",
+                    "infoFiltered": "(从 _MAX_ 条总记录中筛选)", "paginate": { "first": "首页", "last": "末页", "next": "下一页", "previous": "上一页" }
+                },
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var column = this;
+                        var title = $(column.header()).text();
+                        $('<input type="text" placeholder="筛选 ' + title + '" />')
+                            .appendTo($(column.footer()).empty())
+                            .on('keyup change clear', function () {
+                                if (column.search() !== this.value) { column.search(this.value).draw(); }
+                            });
+                    });
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,89 @@
+import configparser
+import os
+from collections import defaultdict
+
+class Config:
+    """一个用于存储和访问配置的类。"""
+    def __init__(self, config_data):
+        self.column_mapping = dict(config_data['column_mapping'])
+        self.history_path = config_data['settings']['history_path']
+        self.charts_dir = config_data['settings']['charts_dir']
+        
+        # visualizer模块希望得到一个根目录，然后在内部拼接 'charts'
+        # 例如，如果 charts_dir 是 'output/charts'，这里会得到 'output'
+        self.output_dir_for_charts = os.path.dirname(self.charts_dir)
+        
+        self.repo_path = config_data['git']['repo_path']
+        self.branch = config_data['git']['branch']
+        self.template_path = config_data['report']['template_path']
+        self.report_output_dir = config_data['report']['output_dir']
+        self.overdue_threshold_days = int(config_data['analysis']['overdue_threshold_days'])
+        
+        # 处理可能为空的 target_tags
+        tags_str = config_data['analysis'].get('target_tags', '')
+        self.target_tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
+
+        # 加载 KPI 设置
+        self.a_priority_name = config_data['kpi_settings']['a_priority_name']
+        risk_priorities_str = config_data['kpi_settings'].get('risk_module_priorities', '')
+        self.risk_module_priorities = [p.strip() for p in risk_priorities_str.split(',') if p.strip()]
+
+        # 加载当前收敛计划
+        self.convergence_plan = {
+            'name': config_data['convergence_plan']['plan_name'],
+            'start_date': config_data['convergence_plan']['start_date'],
+            'end_date': config_data['convergence_plan']['end_date'],
+            'start_count': int(config_data['convergence_plan']['start_count']),
+            'end_count': int(config_data['convergence_plan']['end_count'])
+        }
+
+        # 加载历史收敛计划
+        self.historical_plans = self._load_historical_plans(config_data)
+
+    def _load_historical_plans(self, config_data):
+        """从配置中加载所有历史计划。"""
+        plans = defaultdict(dict)
+        for key, value in config_data['convergence_plan'].items():
+            if not key.startswith('history_plan_'):
+                continue
+            
+            parts = key.split('_')
+            if len(parts) < 4:
+                continue
+            
+            plan_id = parts[2]
+            attr_name = "_".join(parts[3:])
+            
+            if 'count' in attr_name:
+                plans[plan_id][attr_name] = int(value)
+            else:
+                plans[plan_id][attr_name] = value
+
+        # 将字典转换为目标格式的列表
+        historical_plans_list = []
+        for _, plan_data in sorted(plans.items()):
+            historical_plans_list.append({
+                'name': plan_data.get('name'),
+                'start_date': plan_data.get('start_date'),
+                'end_date': plan_data.get('end_date'),
+                'start_count': plan_data.get('start_count'),
+                'end_count': plan_data.get('end_count')
+            })
+        return historical_plans_list
+
+def load_config(path: str = 'config.ini') -> Config:
+    """
+    读取 .ini 配置文件并返回一个配置对象。
+
+    Args:
+        path (str): 配置文件的路径。
+
+    Returns:
+        Config: 一个包含所有配置信息的对象。
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"配置文件未找到: {path}")
+        
+    parser = configparser.ConfigParser()
+    parser.read(path, encoding='utf-8')
+    return Config(parser) 
