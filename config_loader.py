@@ -17,6 +17,7 @@ class Config:
         self.branch = config_data['git']['branch']
         self.template_path = config_data['report']['template_path']
         self.report_output_dir = config_data['report']['output_dir']
+        self.project_name = config_data['report'].get('project_name', '项目')
         self.overdue_threshold_days = int(config_data['analysis']['overdue_threshold_days'])
         
         # 处理可能为空的 target_tags
