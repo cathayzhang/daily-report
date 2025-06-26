@@ -61,6 +61,19 @@ def main():
         analysis_results = analyzer.analyze(df, history_df, config)
         logging.info("数据分析完成。")
 
+        # 处理可编辑的分析报告部分
+        editable_analysis_path = os.path.join(config.report_output_dir, "editable_analysis.html")
+        if os.path.exists(editable_analysis_path):
+            logging.info(f"发现已存在的分析文件，将使用 '{editable_analysis_path}' 中的内容。")
+            with open(editable_analysis_path, 'r', encoding='utf-8') as f:
+                analysis_results['generated_text_html'] = f.read()
+        else:
+            logging.info(f"未发现可编辑的分析文件，将在 '{editable_analysis_path}' 创建新文件。")
+            # 确保目录存在
+            os.makedirs(os.path.dirname(editable_analysis_path), exist_ok=True)
+            with open(editable_analysis_path, 'w', encoding='utf-8') as f:
+                f.write(analysis_results['generated_text_html'])
+
         # 5. 更新历史数据 (使用新的分析结果)
         logging.info(f"正在更新历史数据文件: {config.history_path}...")
         # 从分析结果中提取需要记录到历史的指标

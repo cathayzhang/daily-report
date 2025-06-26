@@ -13,6 +13,7 @@
     h1, h2 { color: #0052cc; }
     h1 { text-align: center; margin-bottom: 5px; }
     h2 { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 0px; font-size: 1.5rem; }
+    h3 { font-size: 1.2rem; color: #172b4d; border-bottom: 1px solid #dfe1e6; padding-bottom: 8px; margin-top: 20px;}
     .card { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); padding: 20px; margin-bottom: 20px; }
     .main-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
     .grid-col-full { grid-column: span 2; }
@@ -25,7 +26,7 @@
     .kpi-title-small { font-size: 0.9rem; font-weight: 600; color: #555; }
     .kpi-value-small { font-size: 1.8rem; font-weight: bold; margin: 8px 0; }
     .kpi-context-small { font-size: 0.8rem; color: #777; }
-    .analysis-wrapper h4 { font-size: 1.1rem; color: #333; margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    .analysis-wrapper h4 { font-size: 1.1rem; color: #333; margin-top: 20px; margin-bottom: 10px; }
     .analysis-wrapper ul, .analysis-wrapper ol { padding-left: 25px; line-height: 1.7; }
     .analysis-wrapper li { margin-bottom: 10px; }
     .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #666; }
@@ -43,7 +44,7 @@
         {% set blocker_color = '#dc3545' if kpis.a_blocker_count > 0 else '#28a745' %}
         
         <div class="card">
-            <h2><i class="fas fa-tachometer-alt"></i> 关键指标摘要</h2>
+            <h2><i class="fas fa-tachometer-alt"></i> 核心KPI仪表盘</h2>
             <div class="kpi-grid-container">
                 <div class="kpi-card-large">
                     <div class="kpi-title-large">收敛偏差</div>
@@ -100,11 +101,9 @@
         </div>
         
         <div class="analysis-wrapper card">
-             <h2><i class="fas fa-microscope"></i> 数据分析与建议</h2>
-             <h4>1. 客观分析</h4>
-             {{ context.analysis.generated_text.objective_analysis|safe }}
-             <h4>2. 行动建议</h4>
-             {{ context.analysis.generated_text.actionable_recommendations|safe }}
+             <h2><i class="fas fa-microscope"></i> 详细分析与建议</h2>
+             {# 这部分内容由 analyzer.py 中的 generate_detailed_analysis_html 生成 #}
+             {{ context.analysis.generated_text_html|safe }}
         </div>
 
         <div class="main-grid">
@@ -128,6 +127,11 @@
                     {% if context.charts.module_dist_html %}
                     <div class="chart-item" style="flex: 1; min-width: 400px;">
                         {{ context.charts.module_dist_html|safe }}
+                    </div>
+                    {% endif %}
+                    {% if context.charts.priority_dist_html %}
+                    <div class="chart-item" style="flex: 1; min-width: 400px;">
+                        {{ context.charts.priority_dist_html|safe }}
                     </div>
                     {% endif %}
                 </div>
@@ -249,7 +253,9 @@
                         $('<input type="text" placeholder="筛选 ' + title + '" />')
                             .appendTo($(column.footer()).empty())
                             .on('keyup change clear', function () {
-                                if (column.search() !== this.value) { column.search(this.value).draw(); }
+                                if (column.search() !== this.value) {
+                                    column.search(this.value).draw();
+                                }
                             });
                     });
                 }

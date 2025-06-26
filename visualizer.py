@@ -162,7 +162,9 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
 
     # 生成趋势图
     if history_df is not None and not history_df.empty:
-        trend_html = _get_trend_chart_html(history_df.copy())
+        # 传递A类问题的列名
+        a_priority_name = config.a_priority_name
+        trend_html = _get_trend_chart_html(history_df.copy(), a_priority_name)
         if trend_html:
             charts_html['trend_chart_html'] = trend_html
             print("趋势图HTML已生成。")
@@ -174,6 +176,14 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
         if module_dist_html:
             charts_html['module_dist_html'] = module_dist_html
             print("模块分布图HTML已生成。")
+
+    # --- 新增: 生成优先级分布图 ---
+    priority_data = analysis_data.get('priority_distribution')
+    if priority_data:
+        priority_dist_html = _get_priority_distribution_chart_html(priority_data)
+        if priority_dist_html:
+            charts_html['priority_dist_html'] = priority_dist_html
+            print("优先级分布图HTML已生成。")
     
     # 生成燃尽图
     if hasattr(config, 'convergence_plan') and history_df is not None:
@@ -184,7 +194,7 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
             
     return charts_html
 
-def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
+def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str:
     """
     Generate Plotly trend chart HTML from history data.
     """
@@ -196,6 +206,7 @@ def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
 
     fig = go.Figure()
 
+    # 总问题趋势
     fig.add_trace(go.Scatter(
         x=history_df['date'],
         y=history_df['total'],
@@ -205,6 +216,18 @@ def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
         fill='tozeroy',
         fillcolor='rgba(54, 162, 235, 0.2)',
     ))
+
+    # A类问题趋势
+    if a_priority_name in history_df.columns:
+        fig.add_trace(go.Scatter(
+            x=history_df['date'],
+            y=history_df[a_priority_name],
+            mode='lines+markers',
+            name=f'{a_priority_name} Issues',
+            line=dict(color='rgba(255, 99, 132, 1)'),
+            fill='tozeroy',
+            fillcolor='rgba(255, 99, 132, 0.2)',
+        ))
 
     if 'resolved' in history_df.columns:
         fig.add_trace(go.Scatter(
@@ -246,6 +269,30 @@ def _get_module_distribution_chart_html(module_data: dict) -> str:
 
     fig.update_layout(
         title_text="Issue Distribution by Module",
+        margin=dict(t=40, l=20, r=20, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+    )
+    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+
+def _get_priority_distribution_chart_html(priority_data: dict) -> str:
+    """
+    Generate Plotly pie chart HTML from priority data.
+    """
+    if not priority_data:
+        return None
+
+    priority_series = pd.Series(priority_data).sort_values(ascending=False)
+
+    fig = go.Figure(data=[go.Pie(
+        labels=priority_series.index,
+        values=priority_series.values,
+        hole=.3,
+        hoverinfo='label+percent+value',
+        textinfo='percent+label'
+    )])
+
+    fig.update_layout(
+        title_text="Issue Distribution by Priority",
         margin=dict(t=40, l=20, r=20, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
     )

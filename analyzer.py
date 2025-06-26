@@ -33,7 +33,7 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
         kpis['convergence_deviation'] = round(convergence_deviation)
         kpis['planned_today_count'] = round(planned_today)
     else:
-        kpis['convergence_deviation'] = None # 不在计划周期内
+        kpis['convergence_deviation'] = None
         kpis['planned_today_count'] = None
 
     # 2. A类问题7日变化
@@ -59,21 +59,21 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     risk_df = df[df['priority'].isin(risk_priorities)]
     if not risk_df.empty and 'module' in risk_df.columns:
         riskiest_module_series = risk_df['module'].value_counts()
-        riskiest_module_name = riskiest_module_series.index[0]
-        riskiest_module_count = int(riskiest_module_series.iloc[0])
-
-        total_risk_issues = risk_df.shape[0]
-        riskiest_module_percentage = (riskiest_module_count / total_risk_issues) * 100 if total_risk_issues > 0 else 0
-
-        kpis['riskiest_module'] = {
-            'name': riskiest_module_name,
-            'count': riskiest_module_count,
-            'percentage_of_total_risk': round(riskiest_module_percentage)
-        }
+        if not riskiest_module_series.empty:
+            riskiest_module_name = riskiest_module_series.index[0]
+            riskiest_module_count = int(riskiest_module_series.iloc[0])
+            total_risk_issues = risk_df.shape[0]
+            riskiest_module_percentage = (riskiest_module_count / total_risk_issues) * 100 if total_risk_issues > 0 else 0
+            kpis['riskiest_module'] = {
+                'name': riskiest_module_name,
+                'count': riskiest_module_count,
+                'percentage_of_total_risk': round(riskiest_module_percentage)
+            }
+        else:
+            kpis['riskiest_module'] = None
     else:
         kpis['riskiest_module'] = None
         
-    # 4. 其他简单KPI
     kpis['a_blocker_count'] = df[df['priority'] == config.a_priority_name].shape[0]
     priority_counts = df['priority'].value_counts()
     kpis['priority_distribution_summary'] = f"A:{priority_counts.get(config.a_priority_name, 0)} / B:{priority_counts.get('Critical', 0)} / C:{priority_counts.get('High', 0)+priority_counts.get('Medium', 0)}"
@@ -81,169 +81,113 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
 
     return kpis
 
-def generate_analysis_and_recommendations(kpis: dict) -> dict:
-    """
-    基于KPI生成分析和建议文案。
-    """
-    analysis = []
-    recommendations = []
-
-    # 分析收敛偏差
-    if kpis.get('convergence_deviation') is not None and kpis['convergence_deviation'] > 0:
-        deviation = kpis['convergence_deviation']
-        analysis.append(f"当前的 <strong>收敛偏差</strong> 显示项目已落后计划 <strong>{deviation}</strong> 个问题。此偏差是由以下因素叠加导致：")
-        
-        factors = []
-        # 分析A类问题趋势
-        if kpis.get('a_issues_7_day_change', 0) > 0:
-            change = kpis['a_issues_7_day_change']
-            has_history_str = "" if kpis.get('a_issues_7_day_change_has_history') else "，且历史数据不足7天，"
-            factors.append(f"<strong>核心风险加剧：</strong> A类问题7日内净增 <strong>+{change}</strong> 个{has_history_str}表明关键问题非但没有收敛，反而在持续累积。")
-
-        # 分析风险模块
-        if kpis.get('riskiest_module'):
-            module = kpis['riskiest_module']
-            factors.append(f"<strong>瓶颈效应凸显：</strong> <strong>{module['name']}</strong> 是风险最集中模块，该模块贡献了 {module['percentage_of_total_risk']}% 的高风险问题。")
-        
-        if factors:
-            analysis.append("<ul><li>" + "</li><li>".join(factors) + "</li></ul>")
-
-        recommendations.append(f"<strong>立即聚焦核心瓶颈：</strong> 建议立即召开 <strong><code>{kpis.get('riskiest_module', {}).get('name', '未知')}</code></strong> 的专题同步会。<strong>理由：</strong> 该模块是当前收敛落后的主要贡献者，需紧急评审其问题列表，识别瓶颈并重新分配资源。")
-
-    # 分析Blocker
+def generate_executive_summary_html(kpis: dict) -> str:
+    summary_html = "<h3>一、总体摘要</h3>"
+    core_conclusion_parts = []
+    
     if kpis.get('a_blocker_count', 0) > 0:
-        blocker_count = kpis['a_blocker_count']
-        analysis.append(f"存在的 <strong>{blocker_count}</strong> 个A类Blocker问题，直接阻碍了版本发布，并推高了存量总数。")
-        recommendations.append(f"<strong>启动Blocker攻坚计划：</strong> 建议为 <strong>{blocker_count}</strong> 个A类Blocker问题成立攻坚小组，每日站会跟踪。<strong>理由：</strong> Blocker问题是最高优先级，解决它们能最快速度降低项目风险。")
+        health_status = '🔴 (危险)'
+        core_conclusion_parts.append("项目当前面临严峻的质量与发布风险。")
+        if kpis.get('a_issues_7_day_change', 0) > 0:
+            core_conclusion_parts.append(f"<strong>A类问题在过去7天内激增{kpis['a_issues_7_day_change']}个</strong>。")
+        
+        riskiest_module_name = kpis.get('riskiest_module', {}).get('name', '关键')
+        core_conclusion_parts.append(f"风险高度集中在 <strong>`{riskiest_module_name}`</strong> 模块。")
+        core_conclusion_parts.append(f"当前的首要任务是立刻成立专项小组，集中资源主攻这{kpis['a_blocker_count']}个A类Blocker，并对`{riskiest_module_name}`模块进行深度技术排查。")
+    else:
+        health_status = '🟢 (健康)'
+        core_conclusion_parts.append("项目当前状态稳定，无紧急发布风险。")
 
-    if not analysis:
-        analysis.append("项目当前状态良好，各项指标均在可控范围内。")
-    if not recommendations:
-        recommendations.append("继续保持当前节奏，关注重点任务的完成情况。")
+    summary_html += f"<p><strong>总体健康度评估:</strong> {health_status}</p>"
+    summary_html += f"<p><strong>核心结论:</strong> {' '.join(core_conclusion_parts)}</p>"
+    summary_html += "<hr>"
+    return summary_html
 
-    return {
-        "objective_analysis": "<ul><li>" + "</li><li>".join(analysis) + "</li></ul>",
-        "actionable_recommendations": "<ol><li>" + "</li><li>".join(recommendations) + "</li></ol>"
-    }
+def generate_detailed_analysis_html(kpis: dict) -> str:
+    if not kpis: return ""
+
+    summary_html = generate_executive_summary_html(kpis)
+
+    trend_analysis_html = "<h3>三、趋势分析</h3>"
+    analysis_points = []
+    if kpis.get('a_issues_7_day_change') == kpis.get('a_blocker_count', -1) and kpis.get('a_issues_7_day_change', 0) > 0:
+        a_change = kpis['a_issues_7_day_change']
+        a_blockers = kpis['a_blocker_count']
+        text = (
+            "<h4>【风险聚焦：高优问题已全部转化为Blocker】</h4>"
+            f"<p><strong>分析:</strong> 本周“A类问题7日净增长”(`+{a_change}`)与“A类Blocker数量”(`{a_blockers}`)完全一致，"
+            "说明短期内爆发的高优问题100%转化为了发布阻断点。</p>"
+        )
+        analysis_points.append(text)
+
+    if kpis.get('riskiest_module'):
+        module_name = kpis['riskiest_module']['name']
+        text = (
+            "<h4>【风险源头定位】</h4>"
+            f"<p><strong>分析:</strong> `{module_name}` 是风险最集中模块。可推断该模块是Blocker问题主要来源，应立刻调查其近期变更。</p>"
+        )
+        analysis_points.append(text)
+    trend_analysis_html += "".join(analysis_points)
+
+    risk_alerts_html = "<h3>四、首要风险预警</h3><ol>"
+    risk_items = []
+    if kpis.get('a_blocker_count', 0) > 0:
+        a_blockers = kpis['a_blocker_count']
+        risk_items.append(f"<li><strong>[高] 版本发布完全受阻:</strong> 存在 `{a_blockers}` 个A类Blocker，发布计划已停滞。</li>")
+    if kpis.get('a_issues_7_day_change', 0) > 0:
+        a_change = kpis['a_issues_7_day_change']
+        risk_items.append(f"<li><strong>[高] 项目质量失控:</strong> A类问题7日净增 `+{a_change}`，问题修复速度远慢于产生速度。</li>")
+    risk_alerts_html += "".join(risk_items) + "</ol>"
+
+    suggestions_html = (
+        "<h3>五、建议</h3>"
+        "<p>建议在日报中增加对“每周完成的问题数”、“单个问题的平均解决时长”等效能指标的统计，以便更全面地掌握项目健康度。</p>"
+    )
+    return summary_html + trend_analysis_html + risk_alerts_html + suggestions_html
 
 def analyze_overall_metrics(df: pd.DataFrame) -> dict:
-    """
-    分析总体指标
-    :param df: 输入的DataFrame
-    :return: 包含总体指标的字典
-    """
     total_count = len(df)
-    # 使用内部标准列名 'status'
     resolved_count = df[df['status'] == '已完成'].shape[0]
     unresolved_count = total_count - resolved_count
-    # 假设 'created_date' 列存在, 并且是 datetime 类型
-    # new_today_count = df[df['created_date'].dt.date == pd.Timestamp.now().date()].shape[0]
-    
-    return {
-        "total_issues": total_count,
-        "resolved_issues": resolved_count,
-        "unresolved_issues": unresolved_count,
-        # "new_today": new_today_count,
-    }
+    return {"total_issues": total_count, "resolved_issues": resolved_count, "unresolved_issues": unresolved_count}
 
 def analyze_priority_distribution(df: pd.DataFrame) -> dict:
-    """
-    分析优先级分布
-    :param df: 输入的DataFrame
-    :return: 包含优先级分布的字典
-    """
-    # 使用内部标准列名 'priority'
     return df['priority'].value_counts().to_dict()
 
 def analyze_status_distribution(df: pd.DataFrame) -> dict:
-    """
-    分析状态分布
-    :param df: 输入的DataFrame
-    :return: 包含状态分布的字典
-    """
-    # 使用内部标准列名 'status'
     return df['status'].value_counts().to_dict()
 
 def analyze_module_distribution(df: pd.DataFrame) -> dict:
-    """
-    分析模块分布
-    :param df: 输入的DataFrame
-    :return: 包含模块分布的字典
-    """
-    # 使用内部标准列名 'module'
-    if 'module' not in df.columns:
-        return {}
+    if 'module' not in df.columns: return {}
     return df['module'].value_counts().to_dict()
 
 def analyze_overdue_issues(df: pd.DataFrame, overdue_threshold_days: int) -> list[dict]:
-    """
-    分析超时问题
-    :param df: 输入的DataFrame
-    :param overdue_threshold_days: 超时阈值（天）
-    :return: 超时问题列表
-    """
-    # 筛选未完成的问题
     unresolved = df[df['status'] != '已完成'].copy()
-    
-    # 筛选出超期问题
     overdue_issues = unresolved[unresolved['age'] > overdue_threshold_days]
-    
     return overdue_issues.to_dict('records')
     
 def analyze_tagged_issues(df: pd.DataFrame, target_tags: list[str]) -> list[dict]:
-    """
-    分析带特定标签的问题
-    :param df: 输入的DataFrame
-    :param target_tags: 目标标签列表
-    :return: 带特定标签的问题列表
-    """
-    if not target_tags or 'tags' not in df.columns:
-        return []
-    
-    # 使用正则表达式匹配包含任何一个目标标签的问题
-    # na=False 表示 NaN 值不匹配
+    if not target_tags or 'tags' not in df.columns: return []
     tagged_issues = df[df['tags'].str.contains('|'.join(target_tags), na=False)]
-    
     return tagged_issues.to_dict('records')
 
 def analyze(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -> dict:
-    """
-    总分析函数，编排所有分析任务
-    :param df: 输入的DataFrame
-    :param history_df: 历史数据DataFrame
-    :param config: 配置对象
-    :return: 包含所有分析结果的字典
-    """
-    # --- 数据预处理：计算年龄 ---
-    # 确保 'created_date' 是 datetime 类型
     df['created_date'] = pd.to_datetime(df['created_date'])
-    # 计算问题年龄 (创建至今的天数)
     now_naive = pd.Timestamp.now().tz_localize(None)
     df['age'] = (now_naive - df['created_date'].dt.tz_localize(None)).dt.days
 
-    # 从配置对象中直接获取分析参数
-    overdue_threshold = config.overdue_threshold_days
-    target_tags = config.target_tags
     a_priority_name = config.a_priority_name
-
-    # 筛选出A类问题
-    a_priority_issues = df[df['priority'] == a_priority_name]
-
     analysis_results = {
         "overall_metrics": analyze_overall_metrics(df),
         "priority_distribution": analyze_priority_distribution(df),
         "status_distribution": analyze_status_distribution(df),
         "module_distribution": analyze_module_distribution(df),
-        "overdue_issues": analyze_overdue_issues(df, overdue_threshold),
-        "tagged_issues": analyze_tagged_issues(df, target_tags),
-        "a_priority_issues": a_priority_issues.to_dict('records') # 新增A类问题列表
+        "overdue_issues": analyze_overdue_issues(df, config.overdue_threshold_days),
+        "tagged_issues": analyze_tagged_issues(df, config.target_tags),
+        "a_priority_issues": df[df['priority'] == a_priority_name].to_dict('records')
     }
 
-    # --- 新增高级分析 ---
     kpis = calculate_kpis(df, history_df, config)
     analysis_results['kpis'] = kpis
-    
-    generated_text = generate_analysis_and_recommendations(kpis)
-    analysis_results['generated_text'] = generated_text
-    
+    analysis_results['generated_text_html'] = generate_detailed_analysis_html(kpis)
     return analysis_results 
