@@ -95,6 +95,7 @@ def main():
 
         # 7. 准备报告上下文
         report_context = {
+            "project_name": config.project_name,
             "analysis": analysis_results,
             "charts": charts_html, # 这里现在是包含HTML的字典
             "data_file": os.path.basename(args.input_file),

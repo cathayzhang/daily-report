@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>项目开发日报 - {{ report_date }}</title>
+    <title>{{ context.project_name }}开发日报 - {{ context.report_date }}</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
@@ -35,8 +35,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>项目开发日报</h1>
-        <p style="text-align: center; color: #666;">报告生成时间: {{ report_date }} | 数据来源: {{ context.data_file }}</p>
+        <h1>{{ context.project_name }}开发日报</h1>
+        <p style="text-align: center; color: #666;">报告生成时间: {{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
 
         {% set kpis = context.analysis.kpis %}
         {# 预先定义颜色变量以避免linter在style属性中报错 #}
@@ -226,7 +226,7 @@
         </div>
 
         <div class="footer">
-            <p>由 JIRA 分析助手自动生成</p>
+            
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
