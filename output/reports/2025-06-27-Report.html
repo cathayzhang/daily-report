@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>总控平台开发日报 - 2025-06-27</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: transparent; }
+    h1, h2 { color: #0052cc; }
+    h1 { text-align: center; margin-bottom: 5px; }
+    h2 { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 0px; font-size: 1.5rem; }
+    h3 { font-size: 1.2rem; color: #172b4d; border-bottom: 1px solid #dfe1e6; padding-bottom: 8px; margin-top: 20px;}
+    .card { background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.07); padding: 20px; margin-bottom: 20px; }
+    .main-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-col-full { grid-column: span 2; }
+    .kpi-grid-container { display: grid; grid-template-columns: repeat(10, 1fr); gap: 20px; }
+    .kpi-card-large { grid-column: span 5; background-color: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
+    .kpi-card-small { grid-column: span 2; background-color: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+    .kpi-title-large { font-size: 1.2rem; font-weight: 600; color: #555; }
+    .kpi-value-large { font-size: 3rem; font-weight: bold; margin: 10px 0; }
+    .kpi-context { font-size: 1rem; color: #777; }
+    .kpi-title-small { font-size: 0.9rem; font-weight: 600; color: #555; }
+    .kpi-value-small { font-size: 1.8rem; font-weight: bold; margin: 8px 0; }
+    .kpi-context-small { font-size: 0.8rem; color: #777; }
+    .analysis-wrapper h4 { font-size: 1.1rem; color: #333; margin-top: 20px; margin-bottom: 10px; }
+    .analysis-wrapper ul, .analysis-wrapper ol { padding-left: 25px; line-height: 1.7; }
+    .analysis-wrapper li { margin-bottom: 10px; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #666; }
+    .collapsible-table summary { font-weight: bold; cursor: pointer; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; margin-top: 10px; }
+    tfoot input { width: 100%; padding: 3px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>总控平台开发日报</h1>
+        <p style="text-align: center; color: #666;">报告生成时间: 2025-06-27 | 数据来源: jira_export_2023-10-27.csv</p>
+
+        
+        
+        
+        
+        <div class="card">
+            <h2><i class="fas fa-tachometer-alt"></i> 核心KPI仪表盘</h2>
+            <div class="kpi-grid-container">
+                <div class="kpi-card-large">
+                    <div class="kpi-title-large">收敛偏差</div>
+                    
+                    <div class="kpi-value-large">-</div>
+                    <div class="kpi-context">当前不在收敛计划周期内</div>
+                    
+                </div>
+                <div class="kpi-card-large">
+                    <div class="kpi-title-large">A类问题7日变化</div>
+                     
+                    <div class="kpi-value-large" style="color: #dc3545;">
+                        <i class="fas fa-chart-line"></i> +36
+                    </div>
+                     
+                    <div class="kpi-context">历史数据不足7天</div>
+                </div>
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">JIRA总数量</div>
+                    <div class="kpi-value-small">200</div>
+                </div>
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">A/B/C 分布</div>
+                    <div class="kpi-value-small" style="font-size: 1.2rem;">A:36 / B:43 / C:80</div>
+                     <div class="kpi-context-small">高优问题(A类)占比 18%</div>
+                </div>
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">A类 Blocker</div>
+                    <div class="kpi-value-small">36</div>
+                    <div class="kpi-context-small" style="color: #dc3545">有紧急阻断项</div>
+                </div>
+                
+                <div class="kpi-card-small">
+                    <div class="kpi-title-small">风险最集中模块</div>
+                    <div class="kpi-value-small" style="font-size: 1.2rem;">Camera</div>
+                    <div class="kpi-context-small">贡献了 16% 的高风险问题</div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="analysis-wrapper card">
+             <h2><i class="fas fa-microscope"></i> 详细分析与建议</h2>
+             
+             <h3>一、总体摘要</h3><p><strong>总体健康度评估:</strong> 🔴 (危险)</p><p><strong>核心结论:</strong> 项目当前面临严峻的质量与发布风险。 <strong>A类问题在过去7天内激增36个</strong>。 风险高度集中在 <strong>`Camera`</strong> 模块。 当前的首要任务是立刻成立专项小组，集中资源主攻这36个A类Blocker，并对`Camera`模块进行深度技术排查。</p><hr><h3>三、趋势分析</h3><h4>【风险聚焦：高优问题已全部转化为Blocker】</h4><p><strong>分析:</strong> 本周“A类问题7日净增长”(`+36`)与“A类Blocker数量”(`36`)完全一致，说明短期内爆发的高优问题100%转化为了发布阻断点。</p><h4>【风险源头定位】</h4><p><strong>分析:</strong> `Camera` 是风险最集中模块。可推断该模块是Blocker问题主要来源，应立刻调查其近期变更。</p><h3>四、首要风险预警</h3><ol><li><strong>[高] 版本发布完全受阻:</strong> 存在 `36` 个A类Blocker，发布计划已停滞。</li><li><strong>[高] 项目质量失控:</strong> A类问题7日净增 `+36`，问题修复速度远慢于产生速度。</li></ol><h3>五、建议</h3><p>建议在日报中增加对“每周完成的问题数”、“单个问题的平均解决时长”等效能指标的统计，以便更全面地掌握项目健康度。</p>
+        </div>
+
+        <div class="main-grid">
+            
+            <div class="grid-col-full card">
+                <h2><i class="fas fa-rocket"></i> 项目收敛燃尽图</h2>
+                <div class="chart-container" style="text-align:center;">
+                    <div>                            <div id="2da79a6a-84a0-4ab3-bcd6-a65a459e7023" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("2da79a6a-84a0-4ab3-bcd6-a65a459e7023")) {                    Plotly.newPlot(                        "2da79a6a-84a0-4ab3-bcd6-a65a459e7023",                        [{"line":{"color":"gray","dash":"dash"},"mode":"lines+markers","name":"Plan: \u4e8c\u9636\u6bb5\u76ee\u6807 (Beta Milestone)","x":["2024-03-21T00:00:00","2024-03-31T00:00:00"],"y":[95,50],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"bgcolor":"white","angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"ternary":{"bgcolor":"white","aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"white","subunitcolor":"#C8D4E3","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"margin":{"t":40,"l":20,"r":20,"b":20},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"title":{"text":"Project Convergence Burn-up"},"xaxis":{"title":{"text":"Date"}},"yaxis":{"title":{"text":"Remaining Issues"}}},                        {"responsive": true}                    )                };            </script>        </div>
+                </div>
+            </div>
+            
+
+            <div class="grid-col-full card">
+                <h2><i class="fas fa-chart-line"></i> 问题趋势与分布</h2>
+                <div class="chart-container" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                    
+                    <div class="chart-item" style="flex: 1; min-width: 400px;">
+                        <div>                            <div id="0c8ea9a2-df54-4d19-9387-f26da77576b6" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("0c8ea9a2-df54-4d19-9387-f26da77576b6")) {                    Plotly.newPlot(                        "0c8ea9a2-df54-4d19-9387-f26da77576b6",                        [{"fill":"tozeroy","fillcolor":"rgba(54, 162, 235, 0.2)","line":{"color":"rgba(54, 162, 235, 1)"},"mode":"lines+markers","name":"Total Issues","x":["2025-06-24T00:00:00.000000000","2025-06-26T00:00:00.000000000","2025-06-27T00:00:00.000000000"],"y":{"dtype":"f8","bdata":"AAAAAAAAaUAAAAAAAABpQAAAAAAAAGlA"},"type":"scatter"},{"fill":"tozeroy","fillcolor":"rgba(255, 99, 132, 0.2)","line":{"color":"rgba(255, 99, 132, 1)"},"mode":"lines+markers","name":"Blocker Issues","x":["2025-06-24T00:00:00.000000000","2025-06-26T00:00:00.000000000","2025-06-27T00:00:00.000000000"],"y":{"dtype":"f8","bdata":"AAAAAAAAQkAAAAAAAABCQAAAAAAAAEJA"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"bgcolor":"white","angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"ternary":{"bgcolor":"white","aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"white","subunitcolor":"#C8D4E3","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"margin":{"t":40,"l":20,"r":20,"b":20},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"title":{"text":"Overall Issue Trend"},"xaxis":{"title":{"text":"Date"}},"yaxis":{"title":{"text":"Number of Issues"}}},                        {"responsive": true}                    )                };            </script>        </div>
+                    </div>
+                    
+                    
+                    <div class="chart-item" style="flex: 1; min-width: 400px;">
+                        <div>                            <div id="e41b413f-be31-4d5d-982b-9786527f40e1" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("e41b413f-be31-4d5d-982b-9786527f40e1")) {                    Plotly.newPlot(                        "e41b413f-be31-4d5d-982b-9786527f40e1",                        [{"hole":0.3,"hoverinfo":"label+percent+value","labels":["Algorithm","Camera","Gallery","UI","Auth","Media","Audio"],"textinfo":"percent+label","values":{"dtype":"i1","bdata":"KSIeHBgWFQ=="},"type":"pie"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"bgcolor":"white","angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"ternary":{"bgcolor":"white","aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"white","subunitcolor":"#C8D4E3","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Issue Distribution by Module"},"margin":{"t":40,"l":20,"r":20,"b":20},"legend":{"orientation":"h","yanchor":"bottom","y":-0.2,"xanchor":"center","x":0.5}},                        {"responsive": true}                    )                };            </script>        </div>
+                    </div>
+                    
+                    
+                    <div class="chart-item" style="flex: 1; min-width: 400px;">
+                        <div>                            <div id="4c523768-e85d-44f5-a757-c82e6550deb6" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("4c523768-e85d-44f5-a757-c82e6550deb6")) {                    Plotly.newPlot(                        "4c523768-e85d-44f5-a757-c82e6550deb6",                        [{"hole":0.3,"hoverinfo":"label+percent+value","labels":["Medium","Critical","Low","Blocker","High"],"textinfo":"percent+label","values":{"dtype":"i1","bdata":"LSspJCM="},"type":"pie"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"bgcolor":"white","angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"ternary":{"bgcolor":"white","aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"white","subunitcolor":"#C8D4E3","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Issue Distribution by Priority"},"margin":{"t":40,"l":20,"r":20,"b":20},"legend":{"orientation":"h","yanchor":"bottom","y":-0.2,"xanchor":"center","x":0.5}},                        {"responsive": true}                    )                };            </script>        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="grid-col-full card">
+                <h2><i class="fas fa-exclamation-triangle"></i> 高风险问题清单</h2>
+                <details class="collapsible-table" open>
+                    <summary>超期问题 (200 个)</summary>
+                    <div class="table-content">
+                        
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </thead>
+                             <tfoot>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </tfoot>
+                            <tbody>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录卡顿</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录异常</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册延迟</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头无声</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>478</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>lisi</td>
+                                    <td>Closed</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频模糊</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录无声</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册无声</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>478</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录崩溃</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>zhangsan</td>
+                                    <td>Closed</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频闪退</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频模糊</td>
+                                    <td>chenni</td>
+                                    <td>Resolved</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>zhangsan</td>
+                                    <td>Closed</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音闪退</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音无声</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>476</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>zhangsan</td>
+                                    <td>In Progress</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI延迟</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Review</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音异常</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头延迟</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI异常</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录异常</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音卡顿</td>
+                                    <td>lisi</td>
+                                    <td>Closed</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Review</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录无声</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录闪退</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>chenni</td>
+                                    <td>Open</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册无声</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法崩溃</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>482</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频无声</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音延迟</td>
+                                    <td>chenni</td>
+                                    <td>Open</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录崩溃</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频无声</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频延迟</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>460</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频闪退</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>482</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频崩溃</td>
+                                    <td>chenni</td>
+                                    <td>Resolved</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音延迟</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>482</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录卡顿</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频模糊</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频延迟</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频延迟</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>476</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频无声</td>
+                                    <td>chenni</td>
+                                    <td>Resolved</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法卡顿</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>460</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头无声</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法延迟</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录卡顿</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI模糊</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音卡顿</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册延迟</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音异常</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录模糊</td>
+                                    <td>lisi</td>
+                                    <td>In Review</td>
+                                    <td>483</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音延迟</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音模糊</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>476</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册延迟</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>482</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法卡顿</td>
+                                    <td>lisi</td>
+                                    <td>In Review</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Review</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法无声</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI模糊</td>
+                                    <td>chenni</td>
+                                    <td>Open</td>
+                                    <td>483</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册异常</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音无声</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法无声</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法无声</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>478</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音延迟</td>
+                                    <td>chenni</td>
+                                    <td>Resolved</td>
+                                    <td>478</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>479</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册无声</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>460</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头延迟</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录异常</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音异常</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>479</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法卡顿</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频延迟</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录延迟</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册异常</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册异常</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>483</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法延迟</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音异常</td>
+                                    <td>zhangsan</td>
+                                    <td>Closed</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册延迟</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音异常</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>483</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>471</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法延迟</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音闪退</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册延迟</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>478</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>479</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频无声</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>471</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频延迟</td>
+                                    <td>lisi</td>
+                                    <td>Closed</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册异常</td>
+                                    <td>lisi</td>
+                                    <td>In Review</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>479</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法模糊</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册无声</td>
+                                    <td>lisi</td>
+                                    <td>In Review</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>zhangsan</td>
+                                    <td>Closed</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI无声</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音无声</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>476</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头延迟</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Review</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>chenni</td>
+                                    <td>In Review</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>476</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册崩溃</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录延迟</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>479</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频崩溃</td>
+                                    <td>chenni</td>
+                                    <td>Resolved</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频崩溃</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>471</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频闪退</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>483</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音无声</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法无声</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频闪退</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>460</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录延迟</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>466</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI异常</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头延迟</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频无声</td>
+                                    <td>zhaoliu</td>
+                                    <td>Resolved</td>
+                                    <td>479</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>471</td>
+                                </tr>
+                            
+                            </tbody>
+                        </table>
+                        
+                    </div>
+                </details>
+                
+                <details class="collapsible-table" open>
+                    <summary>A类问题 (36 个)</summary>
+                    <div class="table-content">
+                        
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </thead>
+                             <tfoot>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                            </tfoot>
+                            <tbody>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>480</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录崩溃</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>469</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>464</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>登录异常</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>chenni</td>
+                                    <td>Closed</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>468</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>chenni</td>
+                                    <td>Open</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>462</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头异常</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Progress</td>
+                                    <td>473</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>zhangsan</td>
+                                    <td>Resolved</td>
+                                    <td>482</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Closed</td>
+                                    <td>467</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频无声</td>
+                                    <td>lisi</td>
+                                    <td>Open</td>
+                                    <td>470</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>wangwu</td>
+                                    <td>Resolved</td>
+                                    <td>460</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频崩溃</td>
+                                    <td>chenni</td>
+                                    <td>Resolved</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>In Review</td>
+                                    <td>482</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册模糊</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>477</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法异常</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>476</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头闪退</td>
+                                    <td>zhaoliu</td>
+                                    <td>Open</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册闪退</td>
+                                    <td>lisi</td>
+                                    <td>Resolved</td>
+                                    <td>474</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头模糊</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Review</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法无声</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI模糊</td>
+                                    <td>chenni</td>
+                                    <td>Open</td>
+                                    <td>483</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>算法闪退</td>
+                                    <td>zhangsan</td>
+                                    <td>Open</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI卡顿</td>
+                                    <td>wangwu</td>
+                                    <td>Closed</td>
+                                    <td>465</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频延迟</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>UI崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Progress</td>
+                                    <td>471</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>461</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册异常</td>
+                                    <td>lisi</td>
+                                    <td>In Review</td>
+                                    <td>463</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>相册崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>In Review</td>
+                                    <td>481</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>摄像头延迟</td>
+                                    <td>zhaoliu</td>
+                                    <td>In Review</td>
+                                    <td>459</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>录音崩溃</td>
+                                    <td>wangwu</td>
+                                    <td>Open</td>
+                                    <td>472</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频崩溃</td>
+                                    <td>chenni</td>
+                                    <td>In Progress</td>
+                                    <td>471</td>
+                                </tr>
+                            
+                                <tr>
+                                    <td></td>
+                                    <td>视频异常</td>
+                                    <td>lisi</td>
+                                    <td>In Progress</td>
+                                    <td>475</td>
+                                </tr>
+                            
+                            </tbody>
+                        </table>
+                        
+                    </div>
+                </details>
+
+                <details class="collapsible-table">
+                    <summary>重点标签问题 (0 个)</summary>
+                    <div class="table-content">
+                        
+                        <p>当前无匹配重点标签的问题。</p>
+                        
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="footer">
+            
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $('.risk-table-datatable').each(function() {
+            var table = $(this).DataTable({
+                "pageLength": 10,
+                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "全部"] ],
+                "language": {
+                    "search": "全局筛选:", "lengthMenu": "每页显示 _MENU_ 条", "zeroRecords": "未找到匹配的记录",
+                    "info": "显示第 _START_ 至 _END_ 条，共 _TOTAL_ 条", "infoEmpty": "显示 0 条记录",
+                    "infoFiltered": "(从 _MAX_ 条总记录中筛选)", "paginate": { "first": "首页", "last": "末页", "next": "下一页", "previous": "上一页" }
+                },
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var column = this;
+                        var title = $(column.header()).text();
+                        $('<input type="text" placeholder="筛选 ' + title + '" />')
+                            .appendTo($(column.footer()).empty())
+                            .on('keyup change clear', function () {
+                                if (column.search() !== this.value) {
+                                    column.search(this.value).draw();
+                                }
+                            });
+                    });
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html> 

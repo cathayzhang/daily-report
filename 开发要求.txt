@@ -1,2 +1,2 @@
 请按照开发方案文档及项目计划进行开发实现 配置模块。调用 dev/magic mcp、 context 7、mcp-servier-chart 和 playwright进行测试验证。开发过程的交流请用中文作答
-调用 dev/magic mcp、 context 7、mcp-servier-chart 和 playwright进行测试验证。开发过程的交流请用中文作答
+调用 dev/magic mcp、 context 7 mcp、mcp-servier-chart mcp和 playwright mcp进行测试验证。开发过程的交流请用中文作答
