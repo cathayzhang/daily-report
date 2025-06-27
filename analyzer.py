@@ -41,15 +41,20 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     current_a_issues = df[df['priority'] == a_priority_name].shape[0]
     kpis['current_a_issues_count'] = current_a_issues
     
-    seven_days_ago = today - timedelta(days=7)
-    history_df['date'] = pd.to_datetime(history_df['date']).dt.date
-    past_data = history_df[history_df['date'] <= seven_days_ago]
-    
-    if not past_data.empty:
-        closest_date = past_data['date'].max()
-        past_a_issues = past_data[past_data['date'] == closest_date][a_priority_name].iloc[0]
-        kpis['a_issues_7_day_change'] = current_a_issues - past_a_issues
-        kpis['a_issues_7_day_change_has_history'] = True
+    # 只有在有历史数据时才计算7日变化
+    if not history_df.empty and 'date' in history_df.columns and a_priority_name in history_df.columns:
+        seven_days_ago = today - timedelta(days=7)
+        history_df['date'] = pd.to_datetime(history_df['date']).dt.date
+        past_data = history_df[history_df['date'] <= seven_days_ago]
+        
+        if not past_data.empty:
+            closest_date = past_data['date'].max()
+            past_a_issues = past_data[past_data['date'] == closest_date][a_priority_name].iloc[0]
+            kpis['a_issues_7_day_change'] = current_a_issues - past_a_issues
+            kpis['a_issues_7_day_change_has_history'] = True
+        else:
+            kpis['a_issues_7_day_change'] = current_a_issues
+            kpis['a_issues_7_day_change_has_history'] = False
     else:
         kpis['a_issues_7_day_change'] = current_a_issues
         kpis['a_issues_7_day_change_has_history'] = False
@@ -94,12 +99,17 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     kpis['priority_distribution_summary'] = f"A:{priority_counts.get(config.a_priority_name, 0)} / B:{priority_counts.get('Critical', 0)} / C:{priority_counts.get('High', 0)+priority_counts.get('Medium', 0)}"
     kpis['a_priority_percentage'] = round((kpis['a_blocker_count'] / total_issues) * 100) if total_issues > 0 else 0
 
-    # 计算DI分数
-    a_count = priority_counts.get(config.a_priority_name, 0)
-    b_count = priority_counts.get('Critical', 0)
-    c_count = priority_counts.get('High', 0) + priority_counts.get('Medium', 0)
-    d_count = priority_counts.get('Low', 0)
-    di_score = round(a_count * 10 + b_count * 3 + c_count * 1 + d_count * 0.1)
+    # 计算A/B/C类问题数量
+    class_counts = {
+        'A': sum(priority_counts.get(p, 0) for p in config.class_priorities.get('A', [])),
+        'B': sum(priority_counts.get(p, 0) for p in config.class_priorities.get('B', [])),
+        'C': sum(priority_counts.get(p, 0) for p in config.class_priorities.get('C', [])),
+    }
+    kpis['class_counts'] = class_counts
+
+    # 计算DI分数 (使用新的分类方式)
+    d_count = priority_counts.get('Low', 0) # 'Low' 通常不计入C类，单独处理
+    di_score = round(class_counts['A'] * 10 + class_counts['B'] * 3 + class_counts['C'] * 1 + d_count * 0.1)
     kpis['di_score'] = di_score
 
     return kpis

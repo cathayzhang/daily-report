@@ -30,17 +30,36 @@ class Config:
         risk_priorities_str = config_data['kpi_settings'].get('risk_module_priorities', '')
         self.risk_module_priorities = [p.strip() for p in risk_priorities_str.split(',') if p.strip()]
 
-        # 加载当前收敛计划
-        self.convergence_plan = {
-            'name': config_data['convergence_plan']['plan_name'],
-            'start_date': config_data['convergence_plan']['start_date'],
-            'end_date': config_data['convergence_plan']['end_date'],
-            'start_count': int(config_data['convergence_plan']['start_count']),
-            'end_count': int(config_data['convergence_plan']['end_count'])
+        # 加载A/B/C类问题定义
+        self.class_priorities = {
+            'A': [p.strip() for p in config_data['kpi_settings'].get('class_a_priorities', '').split(',') if p.strip()],
+            'B': [p.strip() for p in config_data['kpi_settings'].get('class_b_priorities', '').split(',') if p.strip()],
+            'C': [p.strip() for p in config_data['kpi_settings'].get('class_c_priorities', '').split(',') if p.strip()],
         }
 
-        # 加载历史收敛计划
+        # 加载当前收敛计划 (旧版，待废弃)
+        self.convergence_plan = self._load_single_plan(config_data)
+        
+        # 加载历史收敛计划 (旧版，待废弃)
         self.historical_plans = self._load_historical_plans(config_data)
+
+        # 加载新的多维度燃尽图计划
+        self.burnup_plans = self._load_burnup_plans(config_data)
+
+    def _load_single_plan(self, config_data):
+        """加载旧版的单个收敛计划。"""
+        if 'convergence_plan' not in config_data:
+            return None
+        try:
+            return {
+                'name': config_data['convergence_plan']['plan_name'],
+                'start_date': config_data['convergence_plan']['start_date'],
+                'end_date': config_data['convergence_plan']['end_date'],
+                'start_count': int(config_data['convergence_plan']['start_count']),
+                'end_count': int(config_data['convergence_plan']['end_count'])
+            }
+        except KeyError:
+            return None
 
     def _load_historical_plans(self, config_data):
         """从配置中加载所有历史计划。"""
@@ -72,6 +91,34 @@ class Config:
                 'end_count': plan_data.get('end_count')
             })
         return historical_plans_list
+
+    def _load_burnup_plans(self, config_data):
+        """加载所有新的燃尽图计划配置。"""
+        plans = []
+        for section in config_data.sections():
+            if not section.startswith('plan_'):
+                continue
+            
+            plan_data = config_data[section]
+            
+            if not plan_data.getboolean('enabled', False):
+                continue
+
+            try:
+                plan = {
+                    'id': section,
+                    'name': plan_data.get('plan_name', '未命名计划'),
+                    'metric': plan_data['metric_name'],
+                    'start_date': plan_data['start_date'],
+                    'end_date': plan_data['end_date'],
+                    'start_count': plan_data.getint('start_count'),
+                    'end_count': plan_data.getint('end_count')
+                }
+                plans.append(plan)
+            except (KeyError, ValueError) as e:
+                print(f"警告：跳过格式错误的燃尽图计划 '{section}'。错误: {e}")
+                continue
+        return plans
 
 def load_config(path: str = 'config.ini') -> Config:
     """

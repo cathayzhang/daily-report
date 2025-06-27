@@ -78,9 +78,22 @@ def main():
         logging.info(f"正在更新历史数据文件: {config.history_path}...")
         # 从分析结果中提取需要记录到历史的指标
         # 未来这里可以扩展，记录更多每日快照
-        metrics_to_save = analysis_results.get('priority_distribution', {}).copy()
+        metrics_to_save = {}
+
+        # 记录总体和各优先级问题数
         metrics_to_save['total'] = analysis_results.get('overall_metrics', {}).get('total_issues', 0)
+        priority_dist = analysis_results.get('priority_distribution', {})
+        for priority, count in priority_dist.items():
+            metrics_to_save[priority] = count
         
+        # 记录A/B/C类问题总数
+        class_counts = analysis_results.get('kpis', {}).get('class_counts', {})
+        for class_name, count in class_counts.items():
+            metrics_to_save[class_name] = count
+            
+        # 记录DI值
+        metrics_to_save['DI'] = analysis_results.get('kpis', {}).get('di_score', 0)
+
         # 扩展：记录Top 5模块的问题数
         module_dist = analysis_results.get('module_distribution', {})
         if module_dist:
@@ -112,7 +125,9 @@ def main():
             "analysis": analysis_results,
             "charts": charts_html, # 这里现在是包含HTML的字典
             "data_file": os.path.basename(args.input_file),
-            "config_file": args.config
+            "config_file": args.config,
+            "historical_plans": config.historical_plans,
+            "burnup_plans": config.burnup_plans
         }
 
         # 8. 生成最终报告
