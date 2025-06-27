@@ -60,24 +60,47 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     if not risk_df.empty and 'module' in risk_df.columns:
         riskiest_module_series = risk_df['module'].value_counts()
         if not riskiest_module_series.empty:
+            total_risk_issues = risk_df.shape[0]
+
+            # Top 1 for summary
             riskiest_module_name = riskiest_module_series.index[0]
             riskiest_module_count = int(riskiest_module_series.iloc[0])
-            total_risk_issues = risk_df.shape[0]
             riskiest_module_percentage = (riskiest_module_count / total_risk_issues) * 100 if total_risk_issues > 0 else 0
             kpis['riskiest_module'] = {
                 'name': riskiest_module_name,
                 'count': riskiest_module_count,
                 'percentage_of_total_risk': round(riskiest_module_percentage)
             }
+
+            # Top 3 for chart
+            top_3_modules = riskiest_module_series.head(3)
+            kpis['top_3_riskiest_modules'] = []
+            for module, count in top_3_modules.items():
+                percentage = (count / total_risk_issues) * 100 if total_risk_issues > 0 else 0
+                kpis['top_3_riskiest_modules'].append({
+                    'name': module,
+                    'count': int(count),
+                    'percentage': round(percentage)
+                })
         else:
             kpis['riskiest_module'] = None
+            kpis['top_3_riskiest_modules'] = []
     else:
         kpis['riskiest_module'] = None
+        kpis['top_3_riskiest_modules'] = []
         
     kpis['a_blocker_count'] = df[df['priority'] == config.a_priority_name].shape[0]
     priority_counts = df['priority'].value_counts()
     kpis['priority_distribution_summary'] = f"A:{priority_counts.get(config.a_priority_name, 0)} / B:{priority_counts.get('Critical', 0)} / C:{priority_counts.get('High', 0)+priority_counts.get('Medium', 0)}"
     kpis['a_priority_percentage'] = round((kpis['a_blocker_count'] / total_issues) * 100) if total_issues > 0 else 0
+
+    # 计算DI分数
+    a_count = priority_counts.get(config.a_priority_name, 0)
+    b_count = priority_counts.get('Critical', 0)
+    c_count = priority_counts.get('High', 0) + priority_counts.get('Medium', 0)
+    d_count = priority_counts.get('Low', 0)
+    di_score = round(a_count * 10 + b_count * 3 + c_count * 1 + d_count * 0.1)
+    kpis['di_score'] = di_score
 
     return kpis
 
@@ -115,7 +138,7 @@ def generate_detailed_analysis_html(kpis: dict) -> str:
         a_blockers = kpis['a_blocker_count']
         text = (
             "<h4>【风险聚焦：高优问题已全部转化为Blocker】</h4>"
-            f"<p><strong>分析:</strong> 本周“A类问题7日净增长”(`+{a_change}`)与“A类Blocker数量”(`{a_blockers}`)完全一致，"
+            f'<p><strong>分析:</strong> 本周"A类问题7日净增长"(`+{a_change}`)与"A类Blocker数量"(`{a_blockers}`)完全一致，'
             "说明短期内爆发的高优问题100%转化为了发布阻断点。</p>"
         )
         analysis_points.append(text)
@@ -141,7 +164,7 @@ def generate_detailed_analysis_html(kpis: dict) -> str:
 
     suggestions_html = (
         "<h3>五、建议</h3>"
-        "<p>建议在日报中增加对“每周完成的问题数”、“单个问题的平均解决时长”等效能指标的统计，以便更全面地掌握项目健康度。</p>"
+        '<p>建议在日报中增加对"每周完成的问题数"、"单个问题的平均解决时长"等效能指标的统计，以便更全面地掌握项目健康度。</p>'
     )
     return summary_html + trend_analysis_html + risk_alerts_html + suggestions_html
 
