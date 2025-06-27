@@ -193,12 +193,34 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
             charts_html['top_3_riskiest_modules_html'] = risk_module_chart_html
             print("Top 3风险模块图HTML已生成。")
     
-    # 生成燃尽图
-    if hasattr(config, 'convergence_plan') and history_df is not None:
-        burnup_html = _get_burnup_chart_html(history_df.copy(), config.convergence_plan)
-        if burnup_html:
-            charts_html['burnup_chart_html'] = burnup_html
-            print("燃尽图HTML已生成。")
+    # --- 生成燃尽图 (新版) ---
+    if hasattr(config, 'burnup_plans') and config.burnup_plans and history_df is not None:
+        # 1. 筛选出DI计划和ABC问题计划
+        di_plans = [p for p in config.burnup_plans if p.get('metric') == 'DI']
+        abc_plans = [p for p in config.burnup_plans if p.get('metric') in ['A', 'B', 'C']]
+
+        # 2. 为每个计划组生成独立的图表
+        if di_plans:
+            di_burnup_html = _get_burnup_chart_html(
+                history_df=history_df.copy(), 
+                plans=di_plans, 
+                title="DI值收敛燃尽图",
+                yaxis_title="DI值"
+            )
+            if di_burnup_html:
+                charts_html['di_burnup_chart_html'] = di_burnup_html
+                print("DI值燃尽图HTML已生成。")
+        
+        if abc_plans:
+            abc_burnup_html = _get_burnup_chart_html(
+                history_df=history_df.copy(),
+                plans=abc_plans,
+                title="按类问题收敛燃尽图",
+                yaxis_title="剩余问题数"
+            )
+            if abc_burnup_html:
+                charts_html['abc_burnup_chart_html'] = abc_burnup_html
+                print("ABC问题燃尽图HTML已生成。")
             
     return charts_html
 
@@ -320,49 +342,78 @@ def _get_priority_distribution_chart_html(priority_data: dict) -> str:
 
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
 
-def _get_burnup_chart_html(history_df: pd.DataFrame, plan: dict) -> str:
+def _get_burnup_chart_html(history_df: pd.DataFrame, plans: list, title: str, yaxis_title: str) -> str:
     """
-    Generate project convergence burn-up chart HTML.
+    根据配置中的多个计划，生成项目收敛燃尽图。
     """
-    if history_df is None or history_df.empty or not plan or 'total' not in history_df.columns:
+    if history_df is None or history_df.empty or not plans:
         return None
 
     history_df['date'] = pd.to_datetime(history_df['date'])
     history_df = history_df.sort_values('date')
-
-    try:
-        plan_start_date = pd.to_datetime(plan['start_date'])
-        plan_end_date = pd.to_datetime(plan['end_date'])
-        start_count = int(plan['start_count'])
-        end_count = int(plan['end_count'])
-    except (KeyError, TypeError):
-        return None
-
+    
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=[plan_start_date, plan_end_date],
-        y=[start_count, end_count],
-        mode='lines+markers',
-        name=f"Plan: {plan.get('name', 'Convergence Goal')}",
-        line=dict(color='gray', dash='dash')
-    ))
+    # 定义一组颜色以便区分不同的计划
+    colors = [
+        'rgba(220, 57, 18, 1)',   # Red
+        'rgba(54, 162, 235, 1)', # Blue
+        'rgba(255, 193, 7, 1)',   # Yellow
+        'rgba(75, 192, 192, 1)',  # Teal
+        'rgba(153, 102, 255, 1)'  # Purple
+    ]
 
-    actual_data = history_df[history_df['date'].between(plan_start_date, plan_end_date)]
-    if not actual_data.empty:
+    for i, plan in enumerate(plans):
+        color = colors[i % len(colors)]
+        
+        try:
+            plan_start_date = pd.to_datetime(plan['start_date'])
+            plan_end_date = pd.to_datetime(plan['end_date'])
+            start_count = plan['start_count']
+            end_count = plan['end_count']
+            metric_name = plan['metric']
+            plan_name = plan['name']
+        except (KeyError, TypeError) as e:
+            print(f"警告：跳过数据不完整的计划 '{plan.get('id', 'N/A')}': {e}")
+            continue
+
+        # 1. 绘制计划线 (虚线)
         fig.add_trace(go.Scatter(
-            x=actual_data['date'],
-            y=actual_data['total'],
-            mode='lines+markers',
-            name='Actual Remaining',
-            line=dict(color='rgba(220, 57, 18, 1)'),
+            x=[plan_start_date, plan_end_date],
+            y=[start_count, end_count],
+            mode='lines',
+            name=f"计划: {plan_name}",
+            line=dict(color=color, dash='dash'),
+            legendgroup=plan_name,
         ))
 
+        # 2. 绘制实际值线 (实线)
+        if metric_name in history_df.columns:
+            actual_data = history_df[history_df['date'].between(plan_start_date, plan_end_date)]
+            if not actual_data.empty:
+                fig.add_trace(go.Scatter(
+                    x=actual_data['date'],
+                    y=actual_data[metric_name],
+                    mode='lines+markers',
+                    name=f"实际: {plan_name}",
+                    line=dict(color=color),
+                    legendgroup=plan_name,
+                ))
+        else:
+            print(f"警告：在历史数据中未找到指标 '{metric_name}'，无法绘制实际曲线。")
+
+
     fig.update_layout(
-        title="Project Convergence Burn-up",
-        xaxis_title="Date",
-        yaxis_title="Remaining Issues",
-        margin=dict(t=40, l=20, r=20, b=20),
+        title=go.layout.Title(
+            text=title,
+            y=0.95,
+            x=0.05,
+            xanchor='left',
+            yanchor='top'
+        ),
+        xaxis_title="日期",
+        yaxis_title=yaxis_title,
+        margin=dict(t=40, l=40, r=20, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
