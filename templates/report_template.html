@@ -45,41 +45,34 @@
         
         <div class="card">
             <h2><i class="fas fa-tachometer-alt"></i> 核心KPI仪表盘</h2>
-            <div class="kpi-grid-container" style="grid-template-columns: repeat(2, 1fr); gap: 20px;">
+            <!-- Row 1: 3-column grid for main KPIs -->
+            <div class="kpi-grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; margin-bottom: 20px;">
+                <!-- Card 1: Convergence Deviation -->
                 <div class="kpi-card-large" style="grid-column: span 1;">
                     <div class="kpi-title-large">收敛偏差</div>
                     {% if kpis.convergence_deviation and kpis.convergence_deviation > 0 %}
-                    <div class="kpi-value-large" style="color: #dc3545;">
-                        <i class="fas fa-arrow-up"></i> +{{ kpis.convergence_deviation }}
-                    </div>
+                    <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-arrow-up"></i> +{{ kpis.convergence_deviation }}</div>
                     <div class="kpi-context">落后计划 {{ kpis.convergence_deviation }} 个</div>
                     {% elif kpis.convergence_deviation is not none %}
-                    <div class="kpi-value-large" style="color: #28a745;">
-                        <i class="fas fa-arrow-down"></i> {{ kpis.convergence_deviation }}
-                    </div>
+                    <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-arrow-down"></i> {{ kpis.convergence_deviation }}</div>
                     <div class="kpi-context">领先计划 {{ kpis.convergence_deviation|abs }} 个</div>
                     {% else %}
                     <div class="kpi-value-large">-</div>
                     <div class="kpi-context">当前不在收敛计划周期内</div>
                     {% endif %}
                 </div>
+                <!-- Card 2: 7-Day Change -->
                 <div class="kpi-card-large" style="grid-column: span 1;">
                     <div class="kpi-title-large">A类问题7日变化</div>
-                     {% if kpis.a_issues_7_day_change > 0 %}
-                    <div class="kpi-value-large" style="color: #dc3545;">
-                        <i class="fas fa-chart-line"></i> +{{ kpis.a_issues_7_day_change }}
-                    </div>
-                     {% else %}
-                     <div class="kpi-value-large" style="color: #28a745;">
-                        <i class="fas fa-chart-line"></i> {{ kpis.a_issues_7_day_change }}
-                    </div>
-                     {% endif %}
+                    {% if kpis.a_issues_7_day_change > 0 %}
+                    <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-chart-line"></i> +{{ kpis.a_issues_7_day_change }}</div>
+                    {% else %}
+                    <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-chart-line"></i> {{ kpis.a_issues_7_day_change }}</div>
+                    {% endif %}
                     <div class="kpi-context">{{ '有历史数据对比' if kpis.a_issues_7_day_change_has_history else '历史数据不足7天' }}</div>
                 </div>
-            </div>
-
-            <div class="kpi-grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
-                <div class="kpi-card-small" style="grid-column: span 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                <!-- Card 3: JIRA/DI -->
+                <div class="kpi-card-large" style="grid-column: span 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
                     <div style="margin-bottom: 15px;">
                         <div class="kpi-value-small">{{ kpis.total_issues }}</div>
                         <div class="kpi-context-small">JIRA总数量</div>
@@ -89,12 +82,16 @@
                         <div class="kpi-context-small">DI</div>
                     </div>
                 </div>
-
-                <div class="kpi-card-small" style="grid-column: span 1; padding: 0;">
+            </div>
+            <!-- Row 2: 3-column grid for distribution charts -->
+            <div class="kpi-grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div class="kpi-card-small" style="padding: 0;">
+                    {{ (context.charts.module_dist_html if context.charts.module_dist_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无模块数据</div>')|safe }}
+                </div>
+                <div class="kpi-card-small" style="padding: 0;">
                     {{ (context.charts.priority_dist_html if context.charts.priority_dist_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无优先级数据</div>')|safe }}
                 </div>
-
-                <div class="kpi-card-small" style="grid-column: span 1; padding: 0;">
+                <div class="kpi-card-small" style="padding: 0;">
                     {{ (context.charts.top_3_riskiest_modules_html if context.charts.top_3_riskiest_modules_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无风险模块数据</div>')|safe }}
                 </div>
             </div>
@@ -117,21 +114,11 @@
             {% endif %}
 
             <div class="grid-col-full card">
-                <h2><i class="fas fa-chart-line"></i> 问题趋势与分布</h2>
+                <h2><i class="fas fa-chart-line"></i> 问题总体趋势</h2>
                 <div class="chart-container" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
                     {% if context.charts.trend_chart_html %}
                     <div class="chart-item" style="flex: 1; min-width: 400px;">
                         {{ context.charts.trend_chart_html|safe }}
-                    </div>
-                    {% endif %}
-                    {% if context.charts.module_dist_html %}
-                    <div class="chart-item" style="flex: 1; min-width: 400px;">
-                        {{ context.charts.module_dist_html|safe }}
-                    </div>
-                    {% endif %}
-                    {% if context.charts.priority_dist_html %}
-                    <div class="chart-item" style="flex: 1; min-width: 400px;">
-                        {{ context.charts.priority_dist_html|safe }}
                     </div>
                     {% endif %}
                 </div>
