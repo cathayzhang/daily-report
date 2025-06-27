@@ -249,9 +249,9 @@ def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str
         ))
 
     fig.update_layout(
-        title="Overall Issue Trend",
-        xaxis_title="Date",
-        yaxis_title="Number of Issues",
+        title="总体问题趋势",
+        xaxis_title="日期",
+        yaxis_title="问题数量",
         margin=dict(t=40, l=20, r=20, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
@@ -276,9 +276,10 @@ def _get_module_distribution_chart_html(module_data: dict) -> str:
     )])
 
     fig.update_layout(
-        title_text="Issue Distribution by Module",
+        title_text="各模块问题分布",
         margin=dict(t=40, l=20, r=20, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        showlegend=False,
+        height=200
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
 
