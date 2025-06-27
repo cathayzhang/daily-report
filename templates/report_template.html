@@ -133,17 +133,6 @@
             {% endif %}
 
             <div class="grid-col-full card">
-                <h2><i class="fas fa-chart-line"></i> 问题总体趋势</h2>
-                <div class="chart-container" style="display: flex; justify-content: space-around; flex-wrap: wrap;">
-                    {% if context.charts.trend_chart_html %}
-                    <div class="chart-item" style="flex: 1; min-width: 400px;">
-                        {{ context.charts.trend_chart_html|safe }}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="grid-col-full card">
                 <h2><i class="fas fa-exclamation-triangle"></i> 高风险问题清单</h2>
                 <details class="collapsible-table" open>
                     <summary>超期问题 ({{ context.analysis.overdue_issues|length }} 个)</summary>
@@ -151,19 +140,18 @@
                         {% if context.analysis.overdue_issues %}
                         <table class="risk-table-datatable display" style="width:100%">
                             <thead>
-                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th><th>备注</th></tr>
                             </thead>
-                             <tfoot>
-                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
-                            </tfoot>
                             <tbody>
                             {% for issue in context.analysis.overdue_issues %}
                                 <tr>
-                                    <td>{{ issue.key }}</td>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
                                     <td>{{ issue.summary }}</td>
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
+                                    <td class="editable-note"></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -180,19 +168,18 @@
                         {% if context.analysis.a_priority_issues %}
                         <table class="risk-table-datatable display" style="width:100%">
                             <thead>
-                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th><th>备注</th></tr>
                             </thead>
-                             <tfoot>
-                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Age(days)</th></tr>
-                            </tfoot>
                             <tbody>
                             {% for issue in context.analysis.a_priority_issues %}
                                 <tr>
-                                    <td>{{ issue.key }}</td>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
                                     <td>{{ issue.summary }}</td>
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
+                                    <td class="editable-note"></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -209,20 +196,19 @@
                         {% if context.analysis.tagged_issues %}
                         <table class="risk-table-datatable display" style="width:100%">
                             <thead>
-                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Tags</th><th>Age(days)</th></tr>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Tags</th><th>Age(days)</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Tags</th><th>Age(days)</th><th>备注</th></tr>
                             </thead>
-                            <tfoot>
-                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Tags</th><th>Age(days)</th></tr>
-                            </tfoot>
                             <tbody>
                             {% for issue in context.analysis.tagged_issues %}
                                 <tr>
-                                    <td>{{ issue.key }}</td>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
                                     <td>{{ issue.summary }}</td>
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.tags }}</td>
                                     <td>{{ issue.age }}</td>
+                                    <td class="editable-note"></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -244,28 +230,72 @@
     <script>
     $(document).ready(function() {
         $('.risk-table-datatable').each(function() {
+            // Setup - add a text input to each header cell for filtering
+            $(this).find('thead .filters th').each(function () {
+                var title = $(this).text();
+                // The last column ('备注') should not have a filter.
+                if (title) {
+                     $(this).html('<input type="text" placeholder="筛选 ' + title + '" />');
+                }
+            });
+
             var table = $(this).DataTable({
                 "pageLength": 10,
                 "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "全部"] ],
                 "language": {
-                    "search": "全局筛选:", "lengthMenu": "每页显示 _MENU_ 条", "zeroRecords": "未找到匹配的记录",
-                    "info": "显示第 _START_ 至 _END_ 条，共 _TOTAL_ 条", "infoEmpty": "显示 0 条记录",
-                    "infoFiltered": "(从 _MAX_ 条总记录中筛选)", "paginate": { "first": "首页", "last": "末页", "next": "下一页", "previous": "上一页" }
+                    "search": "全局筛选:",
+                    "lengthMenu": "每页显示 _MENU_ 条",
+                    "zeroRecords": "未找到匹配的记录",
+                    "info": "显示第 _START_ 至 _END_ 条，共 _TOTAL_ 条",
+                    "infoEmpty": "显示 0 条记录",
+                    "infoFiltered": "(由 _MAX_ 条记录筛选)",
+                    "paginate": { "first": "首页", "last": "末页", "next": "下一页", "previous": "上一页" }
                 },
-                initComplete: function () {
+                "initComplete": function () {
                     this.api().columns().every(function () {
-                        var column = this;
-                        var title = $(column.header()).text();
-                        $('<input type="text" placeholder="筛选 ' + title + '" />')
-                            .appendTo($(column.footer()).empty())
-                            .on('keyup change clear', function () {
-                                if (column.search() !== this.value) {
-                                    column.search(this.value).draw();
-                                }
-                            });
+                        var that = this;
+                        $('input', this.header()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that.search(this.value).draw();
+                            }
+                        });
                     });
                 }
             });
+
+            // --- Begin script for editable notes ---
+            const setupEditableNotes = () => {
+                const cells = table.cells('td.editable-note', { page: 'current' }).nodes();
+                cells.to$().attr('contenteditable', 'true').each(function() {
+                    const cell = this;
+                    const row = table.row(cell).node();
+                    const keyCell = $(row).find('td:first-child a');
+                    if (!keyCell.length) return;
+                    
+                    const issueKey = keyCell.text();
+                    const storageKey = `note-${issueKey}`;
+
+                    // Load saved note
+                    const savedNote = localStorage.getItem(storageKey);
+                    if (savedNote) {
+                        $(cell).text(savedNote);
+                    }
+
+                    // Save note on blur
+                    $(cell).on('blur', function() {
+                        localStorage.setItem(storageKey, $(this).text());
+                    });
+                });
+            };
+
+            // Initial setup
+            setupEditableNotes();
+
+            // Re-run setup on table draw events (pagination, search)
+            table.on('draw', function() {
+                setupEditableNotes();
+            });
+            // --- End script for editable notes ---
         });
     });
     </script>

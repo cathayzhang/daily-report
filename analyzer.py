@@ -184,14 +184,24 @@ def analyze_module_distribution(df: pd.DataFrame) -> dict:
     if 'module' not in df.columns: return {}
     return df['module'].value_counts().to_dict()
 
-def analyze_overdue_issues(df: pd.DataFrame, overdue_threshold_days: int) -> list[dict]:
+def analyze_overdue_issues(df: pd.DataFrame, config: Config) -> list[dict]:
     unresolved = df[df['status'] != '已完成'].copy()
-    overdue_issues = unresolved[unresolved['age'] > overdue_threshold_days]
+    overdue_issues = unresolved[unresolved['age'] > config.overdue_threshold_days]
+    
+    # Add jira_url if base url and key exist
+    if config.jira_base_url and 'key' in overdue_issues.columns:
+        overdue_issues['jira_url'] = overdue_issues['key'].apply(lambda k: f"{config.jira_base_url.rstrip('/')}/{k}")
+        
     return overdue_issues.to_dict('records')
     
-def analyze_tagged_issues(df: pd.DataFrame, target_tags: list[str]) -> list[dict]:
-    if not target_tags or 'tags' not in df.columns: return []
-    tagged_issues = df[df['tags'].str.contains('|'.join(target_tags), na=False)]
+def analyze_tagged_issues(df: pd.DataFrame, config: Config) -> list[dict]:
+    if not config.target_tags or 'tags' not in df.columns: return []
+    tagged_issues = df[df['tags'].str.contains('|'.join(config.target_tags), na=False)]
+    
+    # Add jira_url if base url and key exist
+    if config.jira_base_url and 'key' in tagged_issues.columns:
+        tagged_issues['jira_url'] = tagged_issues['key'].apply(lambda k: f"{config.jira_base_url.rstrip('/')}/{k}")
+        
     return tagged_issues.to_dict('records')
 
 def analyze(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -> dict:
@@ -200,14 +210,20 @@ def analyze(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -> dict:
     df['age'] = (now_naive - df['created_date'].dt.tz_localize(None)).dt.days
 
     a_priority_name = config.a_priority_name
+    
+    # Prepare a_priority_issues dataframe
+    a_priority_df = df[df['priority'] == a_priority_name].copy()
+    if config.jira_base_url and 'key' in a_priority_df.columns:
+        a_priority_df['jira_url'] = a_priority_df['key'].apply(lambda k: f"{config.jira_base_url.rstrip('/')}/{k}")
+
     analysis_results = {
         "overall_metrics": analyze_overall_metrics(df),
         "priority_distribution": analyze_priority_distribution(df),
         "status_distribution": analyze_status_distribution(df),
         "module_distribution": analyze_module_distribution(df),
-        "overdue_issues": analyze_overdue_issues(df, config.overdue_threshold_days),
-        "tagged_issues": analyze_tagged_issues(df, config.target_tags),
-        "a_priority_issues": df[df['priority'] == a_priority_name].to_dict('records')
+        "overdue_issues": analyze_overdue_issues(df, config),
+        "tagged_issues": analyze_tagged_issues(df, config),
+        "a_priority_issues": a_priority_df.to_dict('records')
     }
 
     kpis = calculate_kpis(df, history_df, config)

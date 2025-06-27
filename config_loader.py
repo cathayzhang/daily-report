@@ -7,6 +7,7 @@ class Config:
     def __init__(self, config_data):
         self.column_mapping = dict(config_data['column_mapping'])
         self.history_path = config_data['settings']['history_path']
+        self.jira_base_url = config_data['settings'].get('jira_base_url', '')
         self.charts_dir = config_data['settings']['charts_dir']
         
         # visualizer模块希望得到一个根目录，然后在内部拼接 'charts'
