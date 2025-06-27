@@ -32,6 +32,16 @@
     .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; font-size: 0.9em; color: #666; }
     .collapsible-table summary { font-weight: bold; cursor: pointer; padding: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; margin-top: 10px; }
     tfoot input { width: 100%; padding: 3px; box-sizing: border-box; }
+    .chart-item {
+        flex: 1 1 33%;
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
 </style>
 </head>
 <body>
@@ -45,10 +55,10 @@
         
         <div class="card">
             <h2><i class="fas fa-tachometer-alt"></i> 核心KPI仪表盘</h2>
-            <!-- Row 1: 3-column grid for main KPIs -->
-            <div class="kpi-grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; margin-bottom: 20px;">
+            <!-- Row 1: 4-column grid for main KPIs and Trend Chart -->
+            <div class="kpi-grid-container" style="grid-template-columns: 0.8fr 1fr 0.8fr 3fr; gap: 15px; align-items: stretch; margin-bottom: 20px;">
                 <!-- Card 1: Convergence Deviation -->
-                <div class="kpi-card-large" style="grid-column: span 1;">
+                <div class="kpi-card-large" style="grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div class="kpi-title-large">收敛偏差</div>
                     {% if kpis.convergence_deviation and kpis.convergence_deviation > 0 %}
                     <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-arrow-up"></i> +{{ kpis.convergence_deviation }}</div>
@@ -62,36 +72,45 @@
                     {% endif %}
                 </div>
                 <!-- Card 2: 7-Day Change -->
-                <div class="kpi-card-large" style="grid-column: span 1;">
+                <div class="kpi-card-large" style="grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between; text-align: center;">
                     <div class="kpi-title-large">A类问题7日变化</div>
-                    {% if kpis.a_issues_7_day_change > 0 %}
-                    <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-chart-line"></i> +{{ kpis.a_issues_7_day_change }}</div>
-                    {% else %}
-                    <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-chart-line"></i> {{ kpis.a_issues_7_day_change }}</div>
-                    {% endif %}
-                    <div class="kpi-context">{{ '有历史数据对比' if kpis.a_issues_7_day_change_has_history else '历史数据不足7天' }}</div>
+                    <div class="kpi-value-large" style="color: {{ kpis.weekly_change_color }}; padding: 0.1em 0;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="kpi-context" style="color: {{ kpis.weekly_change_color }}; font-weight: bold;">
+                        {% if kpis.a_issues_7_day_change > 0 %}+{% endif %}{{ kpis.a_issues_7_day_change }}
+                    </div>
                 </div>
                 <!-- Card 3: JIRA/DI -->
-                <div class="kpi-card-large" style="grid-column: span 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
-                    <div style="margin-bottom: 15px;">
+                <div class="kpi-card-large" style="grid-column: span 1; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
                         <div class="kpi-value-small">{{ kpis.total_issues }}</div>
                         <div class="kpi-context-small">JIRA总数量</div>
                     </div>
+                    <div style="border-top: 1px solid #eee; margin: 15px 20px;"></div>
                     <div>
                         <div class="kpi-value-small">{{ kpis.di_score }}</div>
                         <div class="kpi-context-small">DI</div>
                     </div>
                 </div>
+                <!-- Card 4: Trend Chart -->
+                <div class="kpi-card-large" style="grid-column: span 1; padding: 10px;">
+                    <div class="kpi-title-large" style="margin-bottom: 5px;">问题总体趋势</div>
+                    {{ (context.charts.trend_chart_html if context.charts.trend_chart_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无趋势数据</div>')|safe }}
+                </div>
             </div>
-            <!-- Row 2: 3-column grid for distribution charts -->
-            <div class="kpi-grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                <div class="kpi-card-small" style="padding: 0;">
+            <!-- Row 2: 3-column flexbox for distribution charts -->
+            <div class="chart-container" style="display: flex; flex-direction: row; justify-content: space-between; gap: 20px;">
+                <div class="chart-item">
+                    <div class="kpi-title-large" style="text-align: center; margin-bottom: 5px;">各模块问题分布</div>
                     {{ (context.charts.module_dist_html if context.charts.module_dist_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无模块数据</div>')|safe }}
                 </div>
-                <div class="kpi-card-small" style="padding: 0;">
+                <div class="chart-item">
+                    <div class="kpi-title-large" style="text-align: center; margin-bottom: 5px;">问题优先级分布</div>
                     {{ (context.charts.priority_dist_html if context.charts.priority_dist_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无优先级数据</div>')|safe }}
                 </div>
-                <div class="kpi-card-small" style="padding: 0;">
+                <div class="chart-item">
+                    <div class="kpi-title-large" style="text-align: center; margin-bottom: 5px;">Top 3 风险模块分布</div>
                     {{ (context.charts.top_3_riskiest_modules_html if context.charts.top_3_riskiest_modules_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无风险模块数据</div>')|safe }}
                 </div>
             </div>
