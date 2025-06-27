@@ -184,6 +184,14 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
         if priority_dist_html:
             charts_html['priority_dist_html'] = priority_dist_html
             print("优先级分布图HTML已生成。")
+
+    # --- 新增: 生成Top 3风险模块图 ---
+    top_3_risk_modules_data = analysis_data.get('kpis', {}).get('top_3_riskiest_modules')
+    if top_3_risk_modules_data:
+        risk_module_chart_html = _get_risk_module_bar_chart_html(top_3_risk_modules_data)
+        if risk_module_chart_html:
+            charts_html['top_3_riskiest_modules_html'] = risk_module_chart_html
+            print("Top 3风险模块图HTML已生成。")
     
     # 生成燃尽图
     if hasattr(config, 'convergence_plan') and history_df is not None:
@@ -292,10 +300,12 @@ def _get_priority_distribution_chart_html(priority_data: dict) -> str:
     )])
 
     fig.update_layout(
-        title_text="Issue Distribution by Priority",
+        title_text="问题优先级分布",
         margin=dict(t=40, l=20, r=20, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        showlegend=False,
+        height=200
     )
+
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
 
 def _get_burnup_chart_html(history_df: pd.DataFrame, plan: dict) -> str:
@@ -343,4 +353,40 @@ def _get_burnup_chart_html(history_df: pd.DataFrame, plan: dict) -> str:
         margin=dict(t=40, l=20, r=20, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
+    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+
+def _get_risk_module_bar_chart_html(top_3_modules: list) -> str:
+    """
+    Generate a Plotly horizontal bar chart for the top 3 riskiest modules.
+    """
+    if not top_3_modules:
+        return None
+
+    df = pd.DataFrame(top_3_modules)
+    df = df.sort_values(by='percentage', ascending=True)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        y=df['name'],
+        x=df['percentage'],
+        text=df['percentage'].apply(lambda x: f'{x}%'),
+        textposition='auto',
+        orientation='h',
+        marker_color='rgba(255, 99, 132, 0.8)',
+        marker_line_color='rgba(255, 99, 132, 1)',
+        marker_line_width=1.5,
+    ))
+
+    fig.update_layout(
+        title_text='Top 3 风险模块分布',
+        xaxis_title="风险问题占比 (%)",
+        yaxis_title="模块",
+        margin=dict(l=20, r=20, t=40, b=20),
+        xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
+        showlegend=False,
+        height=200
+    )
+
     return pio.to_html(fig, full_html=False, include_plotlyjs=False) 

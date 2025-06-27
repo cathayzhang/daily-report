@@ -24,8 +24,8 @@
     .kpi-value-large { font-size: 3rem; font-weight: bold; margin: 10px 0; }
     .kpi-context { font-size: 1rem; color: #777; }
     .kpi-title-small { font-size: 0.9rem; font-weight: 600; color: #555; }
-    .kpi-value-small { font-size: 1.8rem; font-weight: bold; margin: 8px 0; }
-    .kpi-context-small { font-size: 0.8rem; color: #777; }
+    .kpi-value-small { font-size: 2.2rem; font-weight: bold; margin: 5px 0; }
+    .kpi-context-small { font-size: 1rem; color: #777; }
     .analysis-wrapper h4 { font-size: 1.1rem; color: #333; margin-top: 20px; margin-bottom: 10px; }
     .analysis-wrapper ul, .analysis-wrapper ol { padding-left: 25px; line-height: 1.7; }
     .analysis-wrapper li { margin-bottom: 10px; }
@@ -79,26 +79,23 @@
             </div>
 
             <div class="kpi-grid-container" style="grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
-                <div class="kpi-card-small" style="grid-column: span 1; text-align: center;">
-                    <div class="kpi-title-small">JIRA总览</div>
-                    <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 10px;">
-                        <div>
-                            <div class="kpi-value-small">{{ kpis.total_issues }}</div>
-                            <div class="kpi-context-small">总数量</div>
-                        </div>
-                        <div>
-                            <div class="kpi-value-small">{{ kpis.di_score }}</div>
-                            <div class="kpi-context-small">DI分数</div>
-                        </div>
+                <div class="kpi-card-small" style="grid-column: span 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="margin-bottom: 15px;">
+                        <div class="kpi-value-small">{{ kpis.total_issues }}</div>
+                        <div class="kpi-context-small">JIRA总数量</div>
+                    </div>
+                    <div>
+                        <div class="kpi-value-small">{{ kpis.di_score }}</div>
+                        <div class="kpi-context-small">DI</div>
                     </div>
                 </div>
 
-                <div class="kpi-card-small" style="grid-column: span 1; padding: 0; min-height: 200px;">
-                    {{ context.charts.priority_dist_html|safe if context.charts.priority_dist_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无优先级数据</div>' }}
+                <div class="kpi-card-small" style="grid-column: span 1; padding: 0;">
+                    {{ (context.charts.priority_dist_html if context.charts.priority_dist_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无优先级数据</div>')|safe }}
                 </div>
 
-                <div class="kpi-card-small" style="grid-column: span 1; padding: 0; min-height: 200px;">
-                    {{ context.charts.top_3_riskiest_modules_html|safe if context.charts.top_3_riskiest_modules_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无风险模块数据</div>' }}
+                <div class="kpi-card-small" style="grid-column: span 1; padding: 0;">
+                    {{ (context.charts.top_3_riskiest_modules_html if context.charts.top_3_riskiest_modules_html else '<div class="kpi-context" style="text-align:center; padding-top: 50px;">无风险模块数据</div>')|safe }}
                 </div>
             </div>
         </div>
