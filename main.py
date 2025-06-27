@@ -2,6 +2,7 @@ import argparse
 import sys
 import logging
 import os
+import markdown
 
 # 动态地将当前目录添加到sys.path，以帮助Python找到其他模块
 # 这在直接从IDE或命令行运行脚本时特别有用
@@ -61,20 +62,21 @@ def main():
         analysis_results = analyzer.analyze(df, history_df, config)
         logging.info("数据分析完成。")
 
-        # 处理可编辑的分析报告部分
-        editable_analysis_path = os.path.join(config.report_output_dir, "editable_analysis.html")
-        if os.path.exists(editable_analysis_path):
-            logging.info(f"发现已存在的分析文件，将使用 '{editable_analysis_path}' 中的内容。")
+        # 5. 读取用户编辑的分析建议 (从 Markdown 文件)
+        logging.info("正在加载用户自定义的分析与建议...")
+        editable_analysis_path = "editable_analysis.md" 
+        try:
             with open(editable_analysis_path, 'r', encoding='utf-8') as f:
-                analysis_results['generated_text_html'] = f.read()
-        else:
-            logging.info(f"未发现可编辑的分析文件，将在 '{editable_analysis_path}' 创建新文件。")
-            # 确保目录存在
-            os.makedirs(os.path.dirname(editable_analysis_path), exist_ok=True)
-            with open(editable_analysis_path, 'w', encoding='utf-8') as f:
-                f.write(analysis_results['generated_text_html'])
+                markdown_content = f.read()
+                # 将 Markdown 转换为 HTML 并注入到分析结果中
+                analysis_results['generated_text_html'] = markdown.markdown(markdown_content)
+            logging.info(f"成功加载并转换 '{editable_analysis_path}'。")
+        except FileNotFoundError:
+            logging.warning(f"'{editable_analysis_path}' 文件未找到。将使用自动生成的分析。")
+            # 如果文件不存在，我们依赖于 analyzer.py 中生成的默认 'generated_text_html'
+            pass
 
-        # 5. 更新历史数据 (使用新的分析结果)
+        # 6. 更新历史数据 (使用新的分析结果)
         logging.info(f"正在更新历史数据文件: {config.history_path}...")
         # 从分析结果中提取需要记录到历史的指标
         # 未来这里可以扩展，记录更多每日快照
@@ -110,7 +112,7 @@ def main():
         updated_history_df = history_mgr.history_df
         logging.info("历史数据更新完成。")
 
-        # 6. 生成可视化图表 (HTML)
+        # 7. 生成可视化图表 (HTML)
         logging.info("开始生成交互式可视化图表...")
         charts_html = visualizer.generate_all_charts(
             analysis_results,
@@ -119,7 +121,7 @@ def main():
         )
         logging.info("交互式图表HTML生成完成。")
 
-        # 7. 准备报告上下文
+        # 8. 准备报告上下文
         report_context = {
             "project_name": config.project_name,
             "analysis": analysis_results,
@@ -130,7 +132,7 @@ def main():
             "burnup_plans": config.burnup_plans
         }
 
-        # 8. 生成最终报告
+        # 9. 生成最终报告
         logging.info(f"开始生成HTML报告，输出至 '{config.report_output_dir}'...")
         report_path = report_generator.generate_report(
             report_context,
