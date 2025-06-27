@@ -249,10 +249,11 @@ def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str
         ))
 
     fig.update_layout(
-        title="总体问题趋势",
-        xaxis_title="日期",
-        yaxis_title="问题数量",
-        margin=dict(t=40, l=20, r=20, b=20),
+        title_text="",
+        xaxis_title="",
+        yaxis_title="",
+        height=160,
+        margin=dict(t=20, l=40, r=20, b=40),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
@@ -260,26 +261,35 @@ def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str
 
 def _get_module_distribution_chart_html(module_data: dict) -> str:
     """
-    Generate Plotly pie chart HTML from module data.
+    Generate Plotly horizontal bar chart HTML from module data.
     """
     if not module_data:
         return None
 
-    module_series = pd.Series(module_data).sort_values(ascending=False)
+    module_series = pd.Series(module_data).sort_values(ascending=True)
 
-    fig = go.Figure(data=[go.Pie(
-        labels=module_series.index,
-        values=module_series.values,
-        hole=.3,
-        hoverinfo='label+percent+value',
-        textinfo='percent+label'
-    )])
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        y=module_series.index,
+        x=module_series.values,
+        text=module_series.values,
+        textposition='auto',
+        orientation='h',
+        marker_color='rgba(54, 162, 235, 0.8)',
+        marker_line_color='rgba(54, 162, 235, 1)',
+        marker_line_width=1.5,
+    ))
 
     fig.update_layout(
-        title_text="各模块问题分布",
-        margin=dict(t=40, l=20, r=20, b=20),
-        showlegend=False,
-        height=200
+        title_text="",
+        xaxis_title="问题数量",
+        yaxis_title="模块",
+        height=240,
+        margin=dict(l=100, r=20, t=20, b=40),
+        xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
+        showlegend=False
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
 
@@ -296,15 +306,16 @@ def _get_priority_distribution_chart_html(priority_data: dict) -> str:
         labels=priority_series.index,
         values=priority_series.values,
         hole=.3,
-        hoverinfo='label+percent+value',
-        textinfo='percent+label'
+        hoverinfo='label+percent',
+        textinfo='label+percent'
     )])
 
     fig.update_layout(
-        title_text="问题优先级分布",
-        margin=dict(t=40, l=20, r=20, b=20),
-        showlegend=False,
-        height=200
+        title_text="",
+        margin=dict(t=20, l=20, r=20, b=20),
+        height=240,
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
     )
 
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
@@ -380,14 +391,14 @@ def _get_risk_module_bar_chart_html(top_3_modules: list) -> str:
     ))
 
     fig.update_layout(
-        title_text='Top 3 风险模块分布',
+        title_text="",
         xaxis_title="风险问题占比 (%)",
         yaxis_title="模块",
+        height=240,
         margin=dict(l=20, r=20, t=40, b=20),
         xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
-        showlegend=False,
-        height=200
+        showlegend=False
     )
 
     return pio.to_html(fig, full_html=False, include_plotlyjs=False) 
