@@ -42,13 +42,27 @@
         flex-direction: column;
         justify-content: flex-start;
     }
+    .header {
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .header h1 {
+        color: #0056b3;
+        margin: 0;
+        font-size: 2.5em;
+    }
+    .header p {
+        /* ... existing styles ... */
+    }
 </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ context.project_name }}</h1>
-            <p class="subtitle">{{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
+            <h1>总控平台开发日报</h1>
+            <p>报告生成时间: {{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
         </div>
 
         {% set kpis = context.analysis.kpis %}
@@ -62,15 +76,20 @@
                 <!-- Card 1: Convergence Deviation -->
                 <div class="kpi-card-large" style="grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div class="kpi-title-large">收敛偏差</div>
-                    {% if kpis.convergence_deviation and kpis.convergence_deviation > 0 %}
-                    <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-arrow-up"></i> +{{ kpis.convergence_deviation }}</div>
-                    <div class="kpi-context">落后计划 {{ kpis.convergence_deviation }} 个</div>
-                    {% elif kpis.convergence_deviation is not none %}
-                    <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-arrow-down"></i> {{ kpis.convergence_deviation }}</div>
-                    <div class="kpi-context">领先计划 {{ kpis.convergence_deviation|abs }} 个</div>
+                    {% if kpis.convergence_deviation is not none %}
+                        {% if kpis.convergence_deviation < 0 %}
+                            {# 落后计划: 偏差为负 (实际DI > 理想DI) #}
+                            <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-arrow-up"></i> {{ "%.0f"|format(kpis.convergence_deviation) }}</div>
+                            <div class="kpi-context">落后计划 {{ ("%.0f"|format(kpis.convergence_deviation))|abs }} DI</div>
+                        {% else %}
+                            {# 领先或持平计划: 偏差为正或零 (实际DI <= 理想DI) #}
+                            <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-arrow-down"></i> +{{ "%.0f"|format(kpis.convergence_deviation) }}</div>
+                            <div class="kpi-context">领先计划 {{ "%.0f"|format(kpis.convergence_deviation) }} DI</div>
+                        {% endif %}
                     {% else %}
-                    <div class="kpi-value-large">-</div>
-                    <div class="kpi-context">当前不在收敛计划周期内</div>
+                        {# 不在计划周期内 #}
+                        <div class="kpi-value-large">-</div>
+                        <div class="kpi-context">当前不在收敛计划周期内</div>
                     {% endif %}
                 </div>
                 <!-- Card 2: 7-Day Change -->

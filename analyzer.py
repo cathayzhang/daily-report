@@ -13,25 +13,43 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     kpis = {}
     today = datetime.now().date()
     
-    # 1. 收敛偏差
-    plan = config.convergence_plan
+    # 1. 收敛偏差 (根据V3.0 P2方案重构)
+    plan = config.burndown_plan 
     total_issues = len(df)
     kpis['total_issues'] = total_issues
+
+    # 计算A/B/C类问题数量
+    class_counts = {
+        'A': sum(df['priority'].isin(config.class_priorities.get('A', []))),
+        'B': sum(df['priority'].isin(config.class_priorities.get('B', []))),
+        'C': sum(df['priority'].isin(config.class_priorities.get('C', []))),
+    }
+    kpis['class_counts'] = class_counts
     
-    start_date = datetime.strptime(plan['start_date'], '%Y-%m-%d').date()
-    end_date = datetime.strptime(plan['end_date'], '%Y-%m-%d').date()
-    
-    planned_today = np.nan
-    if start_date <= today <= end_date:
-        days_in_plan = (end_date - start_date).days
-        days_from_start = (today - start_date).days
+    planned_today_di = np.nan
+    actual_today_di = class_counts['A'] * plan['di_weights']['A'] + \
+                      class_counts['B'] * plan['di_weights']['B'] + \
+                      class_counts['C'] * plan['di_weights']['C'] if plan else 0
+
+    if plan and plan['start_date'] <= today <= plan['end_date']:
+        days_in_plan = (plan['end_date'] - plan['start_date']).days
+        days_from_start = (today - plan['start_date']).days
+        
         if days_in_plan > 0:
-            planned_today = plan['start_count'] - (plan['start_count'] - plan['end_count']) * (days_from_start / days_in_plan)
-    
-    if not pd.isna(planned_today):
-        convergence_deviation = total_issues - planned_today
+            # 计算当天理想A,B,C值
+            ideal_a = plan['start_counts']['A'] - (plan['start_counts']['A'] - plan['target_counts']['A']) * (days_from_start / days_in_plan)
+            ideal_b = plan['start_counts']['B'] - (plan['start_counts']['B'] - plan['target_counts']['B']) * (days_from_start / days_in_plan)
+            ideal_c = plan['start_counts']['C'] - (plan['start_counts']['C'] - plan['target_counts']['C']) * (days_from_start / days_in_plan)
+            
+            # 计算当天理想DI值
+            planned_today_di = ideal_a * plan['di_weights']['A'] + \
+                               ideal_b * plan['di_weights']['B'] + \
+                               ideal_c * plan['di_weights']['C']
+
+    if not pd.isna(planned_today_di):
+        convergence_deviation = planned_today_di - actual_today_di
         kpis['convergence_deviation'] = round(convergence_deviation)
-        kpis['planned_today_count'] = round(planned_today)
+        kpis['planned_today_count'] = round(planned_today_di) # 沿用旧key, 但值为DI
     else:
         kpis['convergence_deviation'] = None
         kpis['planned_today_count'] = None
@@ -99,16 +117,10 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     kpis['priority_distribution_summary'] = f"A:{priority_counts.get(config.a_priority_name, 0)} / B:{priority_counts.get('Critical', 0)} / C:{priority_counts.get('High', 0)+priority_counts.get('Medium', 0)}"
     kpis['a_priority_percentage'] = round((kpis['a_blocker_count'] / total_issues) * 100) if total_issues > 0 else 0
 
-    # 计算A/B/C类问题数量
-    class_counts = {
-        'A': sum(priority_counts.get(p, 0) for p in config.class_priorities.get('A', [])),
-        'B': sum(priority_counts.get(p, 0) for p in config.class_priorities.get('B', [])),
-        'C': sum(priority_counts.get(p, 0) for p in config.class_priorities.get('C', [])),
-    }
-    kpis['class_counts'] = class_counts
-
     # 计算DI分数 (根据用户最新要求调整)
-    di_score = round(class_counts['A'] * 10 + class_counts['B'] * 10 + class_counts['C'] * 10)
+    # 此处DI计算逻辑与收敛偏差中的 actual_today_di 理论上应一致
+    # 若DI权重配置与class_priorities配置有变，需注意
+    di_score = round(class_counts['A'] * 10 + class_counts['B'] * 3 + class_counts['C'] * 1) # 使用硬编码权重以保证兼容性
     kpis['di_score'] = di_score
 
     return kpis

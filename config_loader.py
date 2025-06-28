@@ -1,6 +1,7 @@
 import configparser
 import os
 from collections import defaultdict
+from datetime import datetime
 
 class Config:
     """一个用于存储和访问配置的类。"""
@@ -46,6 +47,9 @@ class Config:
         # 加载新的多维度燃尽图计划
         self.burnup_plans = self._load_burnup_plans(config_data)
 
+        # V3.0 P2 新增：加载自动化核心图表计划
+        self.burndown_plan = self._load_burndown_plan(config_data)
+
     def _load_single_plan(self, config_data):
         """加载旧版的单个收敛计划。"""
         if 'convergence_plan' not in config_data:
@@ -59,6 +63,37 @@ class Config:
                 'end_count': int(config_data['convergence_plan']['end_count'])
             }
         except KeyError:
+            return None
+
+    def _load_burndown_plan(self, config_data):
+        """加载 V3.0 P2 的自动化核心图表计划。"""
+        if 'BurndownPlan' not in config_data:
+            return None
+        
+        section = config_data['BurndownPlan']
+        try:
+            plan = {
+                'start_date': datetime.strptime(section['start_date'], '%Y-%m-%d').date(),
+                'end_date': datetime.strptime(section['end_date'], '%Y-%m-%d').date(),
+                'start_counts': {
+                    'A': section.getint('start_a'),
+                    'B': section.getint('start_b'),
+                    'C': section.getint('start_c'),
+                },
+                'target_counts': {
+                    'A': section.getint('target_a'),
+                    'B': section.getint('target_b'),
+                    'C': section.getint('target_c'),
+                },
+                'di_weights': {
+                    'A': section.getint('di_weight_a'),
+                    'B': section.getint('di_weight_b'),
+                    'C': section.getint('di_weight_c'),
+                }
+            }
+            return plan
+        except (KeyError, ValueError) as e:
+            print(f"警告：跳过格式错误的 [BurndownPlan] 计划。错误: {e}")
             return None
 
     def _load_historical_plans(self, config_data):

@@ -117,7 +117,7 @@ def main():
             "data_file": os.path.basename(args.input_file),
             "config_file": args.config,
             "historical_plans": config.historical_plans,
-            "burnup_plans": config.burnup_plans
+            "burnup_plans": config.burnup_plans,
         }
 
         # 9. 生成最终报告
