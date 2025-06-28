@@ -42,12 +42,31 @@
         flex-direction: column;
         justify-content: flex-start;
     }
+    .header {
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .header h1 {
+        color: #0056b3;
+        margin: 0;
+        font-size: 2.5em;
+    }
+    .header p {
+        /* ... existing styles ... */
+    }
+    .table-content {
+        overflow-x: auto;
+    }
 </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{ context.project_name }}开发日报</h1>
-        <p style="text-align: center; color: #666;">报告生成时间: {{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
+        <div class="header">
+            <h1>总控平台开发日报</h1>
+            <p>报告生成时间: {{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
+        </div>
 
         {% set kpis = context.analysis.kpis %}
         {# 预先定义颜色变量以避免linter在style属性中报错 #}
@@ -60,25 +79,32 @@
                 <!-- Card 1: Convergence Deviation -->
                 <div class="kpi-card-large" style="grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between;">
                     <div class="kpi-title-large">收敛偏差</div>
-                    {% if kpis.convergence_deviation and kpis.convergence_deviation > 0 %}
-                    <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-arrow-up"></i> +{{ kpis.convergence_deviation }}</div>
-                    <div class="kpi-context">落后计划 {{ kpis.convergence_deviation }} 个</div>
-                    {% elif kpis.convergence_deviation is not none %}
-                    <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-arrow-down"></i> {{ kpis.convergence_deviation }}</div>
-                    <div class="kpi-context">领先计划 {{ kpis.convergence_deviation|abs }} 个</div>
+                    {% if kpis.convergence_deviation is not none %}
+                        {% if kpis.convergence_deviation < 0 %}
+                            {# 落后计划: 偏差为负 (实际DI > 理想DI) #}
+                            <div class="kpi-value-large" style="color: #dc3545;"><i class="fas fa-arrow-up"></i> {{ "%.0f"|format(kpis.convergence_deviation) }}</div>
+                            <div class="kpi-context">落后计划 {{ ("%.0f"|format(kpis.convergence_deviation))|abs }} DI</div>
+                        {% else %}
+                            {# 领先或持平计划: 偏差为正或零 (实际DI <= 理想DI) #}
+                            <div class="kpi-value-large" style="color: #28a745;"><i class="fas fa-arrow-down"></i> +{{ "%.0f"|format(kpis.convergence_deviation) }}</div>
+                            <div class="kpi-context">领先计划 {{ "%.0f"|format(kpis.convergence_deviation) }} DI</div>
+                        {% endif %}
                     {% else %}
-                    <div class="kpi-value-large">-</div>
-                    <div class="kpi-context">当前不在收敛计划周期内</div>
+                        {# 不在计划周期内 #}
+                        <div class="kpi-value-large">-</div>
+                        <div class="kpi-context">当前不在收敛计划周期内</div>
                     {% endif %}
                 </div>
                 <!-- Card 2: 7-Day Change -->
                 <div class="kpi-card-large" style="grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between; text-align: center;">
                     <div class="kpi-title-large">A类问题7日变化</div>
-                    <div class="kpi-value-large" style="color: {{ kpis.weekly_change_color }}; padding: 0.1em 0;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="kpi-context" style="color: {{ kpis.weekly_change_color }}; font-weight: bold;">
-                        {% if kpis.a_issues_7_day_change > 0 %}+{% endif %}{{ kpis.a_issues_7_day_change }}
+                    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
+                        <div class="kpi-value-large" style="color: {{ kpis.weekly_change_color }};">
+                            <i class="fas fa-chart-line"></i>
+                            <span style="margin-left: 0.5em;">
+                                {% if kpis.a_issues_7_day_change > 0 %}+{% endif %}{{ kpis.a_issues_7_day_change }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <!-- Card 3: JIRA/DI -->
@@ -176,6 +202,35 @@
             <div class="grid-col-full card">
                 <h2><i class="fas fa-exclamation-triangle"></i> 高风险问题清单</h2>
                 <details class="collapsible-table" open>
+                    <summary>动态高风险问题 ({{ context.analysis.high_risk_issues|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.high_risk_issues %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Priority</th><th>Age(days)</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Priority</th><th>Age(days)</th><th>备注</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for issue in context.analysis.high_risk_issues %}
+                                <tr>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td>{{ issue.priority }}</td>
+                                    <td>{{ issue.age }}</td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>根据当前配置规则，无动态高风险问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table" open>
                     <summary>超期问题 ({{ context.analysis.overdue_issues|length }} 个)</summary>
                     <div class="table-content">
                         {% if context.analysis.overdue_issues %}
@@ -192,7 +247,7 @@
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note"></td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -202,8 +257,8 @@
                         {% endif %}
                     </div>
                 </details>
-                
-                <details class="collapsible-table" open>
+
+                <details class="collapsible-table">
                     <summary>A类问题 ({{ context.analysis.a_priority_issues|length }} 个)</summary>
                     <div class="table-content">
                         {% if context.analysis.a_priority_issues %}
@@ -220,13 +275,67 @@
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note"></td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
                         {% else %}
                         <p>当前无A类问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table">
+                    <summary>当日新增A类问题 ({{ context.analysis.new_a_issues_today|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.new_a_issues_today %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for issue in context.analysis.new_a_issues_today %}
+                                <tr>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>今日无新增A类问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table">
+                    <summary>当日关闭A类问题 ({{ context.analysis.closed_a_issues_today|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.closed_a_issues_today %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for issue in context.analysis.closed_a_issues_today %}
+                                <tr>
+                                    <td><a href="{{ issue.jira_url }}" target_blank">{{ issue.key }}</a></td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>今日无关闭A类问题。</p>
                         {% endif %}
                     </div>
                 </details>
@@ -249,7 +358,7 @@
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.tags }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note"></td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>

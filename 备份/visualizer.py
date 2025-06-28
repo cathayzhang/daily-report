@@ -162,7 +162,9 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
 
     # 生成趋势图
     if history_df is not None and not history_df.empty:
-        trend_html = _get_trend_chart_html(history_df.copy())
+        # 传递A类问题的列名
+        a_priority_name = config.a_priority_name
+        trend_html = _get_trend_chart_html(history_df.copy(), a_priority_name)
         if trend_html:
             charts_html['trend_chart_html'] = trend_html
             print("趋势图HTML已生成。")
@@ -174,17 +176,55 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
         if module_dist_html:
             charts_html['module_dist_html'] = module_dist_html
             print("模块分布图HTML已生成。")
+
+    # --- 新增: 生成优先级分布图 ---
+    priority_data = analysis_data.get('priority_distribution')
+    if priority_data:
+        priority_dist_html = _get_priority_distribution_chart_html(priority_data)
+        if priority_dist_html:
+            charts_html['priority_dist_html'] = priority_dist_html
+            print("优先级分布图HTML已生成。")
+
+    # --- 新增: 生成Top 3风险模块图 ---
+    top_3_risk_modules_data = analysis_data.get('kpis', {}).get('top_3_riskiest_modules')
+    if top_3_risk_modules_data:
+        risk_module_chart_html = _get_risk_module_bar_chart_html(top_3_risk_modules_data)
+        if risk_module_chart_html:
+            charts_html['top_3_riskiest_modules_html'] = risk_module_chart_html
+            print("Top 3风险模块图HTML已生成。")
     
-    # 生成燃尽图
-    if hasattr(config, 'convergence_plan') and history_df is not None:
-        burnup_html = _get_burnup_chart_html(history_df.copy(), config.convergence_plan)
-        if burnup_html:
-            charts_html['burnup_chart_html'] = burnup_html
-            print("燃尽图HTML已生成。")
+    # --- 生成燃尽图 (新版) ---
+    if hasattr(config, 'burnup_plans') and config.burnup_plans and history_df is not None:
+        # 1. 筛选出DI计划和ABC问题计划
+        di_plans = [p for p in config.burnup_plans if p.get('metric') == 'DI']
+        abc_plans = [p for p in config.burnup_plans if p.get('metric') in ['A', 'B', 'C']]
+
+        # 2. 为每个计划组生成独立的图表
+        if di_plans:
+            di_burnup_html = _get_burnup_chart_html(
+                history_df=history_df.copy(), 
+                plans=di_plans, 
+                title="DI值收敛燃尽图",
+                yaxis_title="DI值"
+            )
+            if di_burnup_html:
+                charts_html['di_burnup_chart_html'] = di_burnup_html
+                print("DI值燃尽图HTML已生成。")
+        
+        if abc_plans:
+            abc_burnup_html = _get_burnup_chart_html(
+                history_df=history_df.copy(),
+                plans=abc_plans,
+                title="按类问题收敛燃尽图",
+                yaxis_title="剩余问题数"
+            )
+            if abc_burnup_html:
+                charts_html['abc_burnup_chart_html'] = abc_burnup_html
+                print("ABC问题燃尽图HTML已生成。")
             
     return charts_html
 
-def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
+def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str:
     """
     Generate Plotly trend chart HTML from history data.
     """
@@ -196,6 +236,7 @@ def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
 
     fig = go.Figure()
 
+    # 总问题趋势
     fig.add_trace(go.Scatter(
         x=history_df['date'],
         y=history_df['total'],
@@ -205,6 +246,18 @@ def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
         fill='tozeroy',
         fillcolor='rgba(54, 162, 235, 0.2)',
     ))
+
+    # A类问题趋势
+    if a_priority_name in history_df.columns:
+        fig.add_trace(go.Scatter(
+            x=history_df['date'],
+            y=history_df[a_priority_name],
+            mode='lines+markers',
+            name=f'{a_priority_name} Issues',
+            line=dict(color='rgba(255, 99, 132, 1)'),
+            fill='tozeroy',
+            fillcolor='rgba(255, 99, 132, 0.2)',
+        ))
 
     if 'resolved' in history_df.columns:
         fig.add_trace(go.Scatter(
@@ -218,10 +271,11 @@ def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
         ))
 
     fig.update_layout(
-        title="Overall Issue Trend",
-        xaxis_title="Date",
-        yaxis_title="Number of Issues",
-        margin=dict(t=40, l=20, r=20, b=20),
+        title_text="",
+        xaxis_title="",
+        yaxis_title="",
+        height=160,
+        margin=dict(t=20, l=40, r=20, b=40),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
@@ -229,71 +283,173 @@ def _get_trend_chart_html(history_df: pd.DataFrame) -> str:
 
 def _get_module_distribution_chart_html(module_data: dict) -> str:
     """
-    Generate Plotly pie chart HTML from module data.
+    Generate Plotly horizontal bar chart HTML from module data.
     """
     if not module_data:
         return None
 
-    module_series = pd.Series(module_data).sort_values(ascending=False)
+    module_series = pd.Series(module_data).sort_values(ascending=True)
 
-    fig = go.Figure(data=[go.Pie(
-        labels=module_series.index,
-        values=module_series.values,
-        hole=.3,
-        hoverinfo='label+percent+value',
-        textinfo='percent+label'
-    )])
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        y=module_series.index,
+        x=module_series.values,
+        text=module_series.values,
+        textposition='auto',
+        orientation='h',
+        marker_color='rgba(54, 162, 235, 0.8)',
+        marker_line_color='rgba(54, 162, 235, 1)',
+        marker_line_width=1.5,
+    ))
 
     fig.update_layout(
-        title_text="Issue Distribution by Module",
-        margin=dict(t=40, l=20, r=20, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        title_text="",
+        xaxis_title="问题数量",
+        yaxis_title="模块",
+        height=240,
+        margin=dict(l=100, r=20, t=20, b=40),
+        xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
+        showlegend=False
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
 
-def _get_burnup_chart_html(history_df: pd.DataFrame, plan: dict) -> str:
+def _get_priority_distribution_chart_html(priority_data: dict) -> str:
     """
-    Generate project convergence burn-up chart HTML.
+    Generate Plotly pie chart HTML from priority data.
     """
-    if history_df is None or history_df.empty or not plan or 'total' not in history_df.columns:
+    if not priority_data:
+        return None
+
+    priority_series = pd.Series(priority_data).sort_values(ascending=False)
+
+    fig = go.Figure(data=[go.Pie(
+        labels=priority_series.index,
+        values=priority_series.values,
+        hole=.3,
+        hoverinfo='label+percent',
+        textinfo='label+percent'
+    )])
+
+    fig.update_layout(
+        title_text="",
+        margin=dict(t=20, l=20, r=20, b=20),
+        height=240,
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+    )
+
+    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+
+def _get_burnup_chart_html(history_df: pd.DataFrame, plans: list, title: str, yaxis_title: str) -> str:
+    """
+    根据配置中的多个计划，生成项目收敛燃尽图。
+    """
+    if history_df is None or history_df.empty or not plans:
         return None
 
     history_df['date'] = pd.to_datetime(history_df['date'])
     history_df = history_df.sort_values('date')
+    
+    fig = go.Figure()
 
-    try:
-        plan_start_date = pd.to_datetime(plan['start_date'])
-        plan_end_date = pd.to_datetime(plan['end_date'])
-        start_count = int(plan['start_count'])
-        end_count = int(plan['end_count'])
-    except (KeyError, TypeError):
+    # 定义一组颜色以便区分不同的计划
+    colors = [
+        'rgba(220, 57, 18, 1)',   # Red
+        'rgba(54, 162, 235, 1)', # Blue
+        'rgba(255, 193, 7, 1)',   # Yellow
+        'rgba(75, 192, 192, 1)',  # Teal
+        'rgba(153, 102, 255, 1)'  # Purple
+    ]
+
+    for i, plan in enumerate(plans):
+        color = colors[i % len(colors)]
+        
+        try:
+            plan_start_date = pd.to_datetime(plan['start_date'])
+            plan_end_date = pd.to_datetime(plan['end_date'])
+            start_count = plan['start_count']
+            end_count = plan['end_count']
+            metric_name = plan['metric']
+            plan_name = plan['name']
+        except (KeyError, TypeError) as e:
+            print(f"警告：跳过数据不完整的计划 '{plan.get('id', 'N/A')}': {e}")
+            continue
+
+        # 1. 绘制计划线 (虚线)
+        fig.add_trace(go.Scatter(
+            x=[plan_start_date, plan_end_date],
+            y=[start_count, end_count],
+            mode='lines',
+            name=f"计划: {plan_name}",
+            line=dict(color=color, dash='dash'),
+            legendgroup=plan_name,
+        ))
+
+        # 2. 绘制实际值线 (实线)
+        if metric_name in history_df.columns:
+            actual_data = history_df[history_df['date'].between(plan_start_date, plan_end_date)]
+            if not actual_data.empty:
+                fig.add_trace(go.Scatter(
+                    x=actual_data['date'],
+                    y=actual_data[metric_name],
+                    mode='lines+markers',
+                    name=f"实际: {plan_name}",
+                    line=dict(color=color),
+                    legendgroup=plan_name,
+                ))
+        else:
+            print(f"警告：在历史数据中未找到指标 '{metric_name}'，无法绘制实际曲线。")
+
+
+    fig.update_layout(
+        title=go.layout.Title(
+            text=title,
+            y=0.95,
+            x=0.05,
+            xanchor='left',
+            yanchor='top'
+        ),
+        xaxis_title="日期",
+        yaxis_title=yaxis_title,
+        margin=dict(t=40, l=40, r=20, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+
+def _get_risk_module_bar_chart_html(top_3_modules: list) -> str:
+    """
+    Generate a Plotly horizontal bar chart for the top 3 riskiest modules.
+    """
+    if not top_3_modules:
         return None
+
+    df = pd.DataFrame(top_3_modules)
+    df = df.sort_values(by='percentage', ascending=True)
 
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=[plan_start_date, plan_end_date],
-        y=[start_count, end_count],
-        mode='lines+markers',
-        name=f"Plan: {plan.get('name', 'Convergence Goal')}",
-        line=dict(color='gray', dash='dash')
+    fig.add_trace(go.Bar(
+        y=df['name'],
+        x=df['percentage'],
+        text=df['percentage'].apply(lambda x: f'{x}%'),
+        textposition='auto',
+        orientation='h',
+        marker_color='rgba(255, 99, 132, 0.8)',
+        marker_line_color='rgba(255, 99, 132, 1)',
+        marker_line_width=1.5,
     ))
 
-    actual_data = history_df[history_df['date'].between(plan_start_date, plan_end_date)]
-    if not actual_data.empty:
-        fig.add_trace(go.Scatter(
-            x=actual_data['date'],
-            y=actual_data['total'],
-            mode='lines+markers',
-            name='Actual Remaining',
-            line=dict(color='rgba(220, 57, 18, 1)'),
-        ))
-
     fig.update_layout(
-        title="Project Convergence Burn-up",
-        xaxis_title="Date",
-        yaxis_title="Remaining Issues",
-        margin=dict(t=40, l=20, r=20, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        title_text="",
+        xaxis_title="风险问题占比 (%)",
+        yaxis_title="模块",
+        height=240,
+        margin=dict(l=20, r=20, t=40, b=20),
+        xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
+        showlegend=False
     )
+
     return pio.to_html(fig, full_html=False, include_plotlyjs=False) 

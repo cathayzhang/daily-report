@@ -3,4 +3,5 @@ jinja2
 plotly
 # matplotlib is being replaced by plotly
 # openpyxl is required by pandas to read .xlsx files
-openpyxl 
+openpyxl
+markdown 

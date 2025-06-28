@@ -1,138 +1,97 @@
 import configparser
+import logging
 import os
 from collections import defaultdict
+from datetime import datetime
 
 class Config:
     """一个用于存储和访问配置的类。"""
     def __init__(self, config_data):
-        self.column_mapping = dict(config_data['column_mapping'])
-        self.history_path = config_data['settings']['history_path']
-        self.jira_base_url = config_data['settings'].get('jira_base_url', '')
-        self.charts_dir = config_data['settings']['charts_dir']
+        self._config = config_data
+        self.column_mapping = dict(self._config.items('column_mapping'))
         
-        # visualizer模块希望得到一个根目录，然后在内部拼接 'charts'
-        # 例如，如果 charts_dir 是 'output/charts'，这里会得到 'output'
-        self.output_dir_for_charts = os.path.dirname(self.charts_dir)
+        # --- Settings ---
+        self.jira_base_url = self._config.get('settings', 'jira_base_url', fallback='https://your-jira-instance.com/browse/')
         
-        self.repo_path = config_data['git']['repo_path']
-        self.branch = config_data['git']['branch']
-        self.template_path = config_data['report']['template_path']
-        self.report_output_dir = config_data['report']['output_dir']
-        self.project_name = config_data['report'].get('project_name', '项目')
-        self.overdue_threshold_days = int(config_data['analysis']['overdue_threshold_days'])
+        # --- Report ---
+        self.template_path = self._config.get('report', 'template_path', fallback='templates/report_template.html')
+        self.report_output_dir = self._config.get('report', 'output_dir', fallback='output/reports/')
+        self.project_name = self._config.get('report', 'project_name', fallback='项目开发日报')
         
-        # 处理可能为空的 target_tags
-        tags_str = config_data['analysis'].get('target_tags', '')
-        self.target_tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
-
-        # 加载 KPI 设置
-        self.a_priority_name = config_data['kpi_settings']['a_priority_name']
-        risk_priorities_str = config_data['kpi_settings'].get('risk_module_priorities', '')
-        self.risk_module_priorities = [p.strip() for p in risk_priorities_str.split(',') if p.strip()]
-
-        # 加载A/B/C类问题定义
-        self.class_priorities = {
-            'A': [p.strip() for p in config_data['kpi_settings'].get('class_a_priorities', '').split(',') if p.strip()],
-            'B': [p.strip() for p in config_data['kpi_settings'].get('class_b_priorities', '').split(',') if p.strip()],
-            'C': [p.strip() for p in config_data['kpi_settings'].get('class_c_priorities', '').split(',') if p.strip()],
-        }
-
-        # 加载当前收敛计划 (旧版，待废弃)
-        self.convergence_plan = self._load_single_plan(config_data)
+        # --- Analysis ---
+        self.overdue_threshold_days = self._config.getint('analysis', 'overdue_threshold_days', fallback=14)
+        self.target_tags = [tag.strip() for tag in self._config.get('analysis', 'target_tags', fallback='').split(',') if tag.strip()]
         
-        # 加载历史收敛计划 (旧版，待废弃)
-        self.historical_plans = self._load_historical_plans(config_data)
+        # --- KPI Settings ---
+        self.a_priority_name = self._config.get('kpi_settings', 'a_priority_name', fallback='Blocker')
+        self.risk_module_priorities = [p.strip() for p in self._config.get('kpi_settings', 'risk_module_priorities', fallback='').split(',') if p.strip()]
+        self.class_a_priorities = [p.strip() for p in self._config.get('kpi_settings', 'class_a_priorities', fallback='').split(',') if p.strip()]
+        self.class_b_priorities = [p.strip() for p in self._config.get('kpi_settings', 'class_b_priorities', fallback='').split(',') if p.strip()]
+        self.class_c_priorities = [p.strip() for p in self._config.get('kpi_settings', 'class_c_priorities', fallback='').split(',') if p.strip()]
+        
+        # --- DI Weights ---
+        self.di_weights = {k: self._config.getint('di_weights', k) for k in self._config.options('di_weights')}
+        
+        # --- Load All Burnup Plans ---
+        self.burnup_plans = self._load_burnup_plans()
+        
+        # --- Load High Risk Rules ---
+        self.high_risk_rules = self.get_high_risk_rules()
 
-        # 加载新的多维度燃尽图计划
-        self.burnup_plans = self._load_burnup_plans(config_data)
-
-    def _load_single_plan(self, config_data):
-        """加载旧版的单个收敛计划。"""
-        if 'convergence_plan' not in config_data:
-            return None
-        try:
-            return {
-                'name': config_data['convergence_plan']['plan_name'],
-                'start_date': config_data['convergence_plan']['start_date'],
-                'end_date': config_data['convergence_plan']['end_date'],
-                'start_count': int(config_data['convergence_plan']['start_count']),
-                'end_count': int(config_data['convergence_plan']['end_count'])
-            }
-        except KeyError:
-            return None
-
-    def _load_historical_plans(self, config_data):
-        """从配置中加载所有历史计划。"""
-        plans = defaultdict(dict)
-        for key, value in config_data['convergence_plan'].items():
-            if not key.startswith('history_plan_'):
-                continue
-            
-            parts = key.split('_')
-            if len(parts) < 4:
-                continue
-            
-            plan_id = parts[2]
-            attr_name = "_".join(parts[3:])
-            
-            if 'count' in attr_name:
-                plans[plan_id][attr_name] = int(value)
-            else:
-                plans[plan_id][attr_name] = value
-
-        # 将字典转换为目标格式的列表
-        historical_plans_list = []
-        for _, plan_data in sorted(plans.items()):
-            historical_plans_list.append({
-                'name': plan_data.get('name'),
-                'start_date': plan_data.get('start_date'),
-                'end_date': plan_data.get('end_date'),
-                'start_count': plan_data.get('start_count'),
-                'end_count': plan_data.get('end_count')
-            })
-        return historical_plans_list
-
-    def _load_burnup_plans(self, config_data):
-        """加载所有新的燃尽图计划配置。"""
+    def _load_burnup_plans(self):
+        """Dynamically load all sections starting with 'plan_'."""
         plans = []
-        for section in config_data.sections():
-            if not section.startswith('plan_'):
-                continue
-            
-            plan_data = config_data[section]
-            
-            if not plan_data.getboolean('enabled', False):
-                continue
-
-            try:
-                plan = {
-                    'id': section,
-                    'name': plan_data.get('plan_name', '未命名计划'),
-                    'metric': plan_data['metric_name'],
-                    'start_date': plan_data['start_date'],
-                    'end_date': plan_data['end_date'],
-                    'start_count': plan_data.getint('start_count'),
-                    'end_count': plan_data.getint('end_count')
-                }
-                plans.append(plan)
-            except (KeyError, ValueError) as e:
-                print(f"警告：跳过格式错误的燃尽图计划 '{section}'。错误: {e}")
-                continue
+        for section in self._config.sections():
+            if section.startswith('plan_') and self._config.getboolean(section, 'enabled', fallback=False):
+                try:
+                    plan = {
+                        "id": section,
+                        "name": self._config.get(section, 'plan_name'),
+                        "metric": self._config.get(section, 'metric'),
+                        "start_date": self._config.get(section, 'start_date'),
+                        "end_date": self._config.get(section, 'end_date'),
+                        "start_count": self._config.getfloat(section, 'start_count'),
+                        "end_count": self._config.getfloat(section, 'end_count'),
+                    }
+                    plans.append(plan)
+                except (configparser.NoOptionError, ValueError) as e:
+                    logging.warning(f"Skipping invalid burndown plan in section '{section}': {e}")
         return plans
 
-def load_config(path: str = 'config.ini') -> Config:
-    """
-    读取 .ini 配置文件并返回一个配置对象。
+    def get_high_risk_rules(self):
+        """Parses the [HighRiskRules] section from the config file."""
+        rules = []
+        if not self._config.has_section('HighRiskRules'):
+            return rules
 
-    Args:
-        path (str): 配置文件的路径。
+        for key, value in self._config.items('HighRiskRules'):
+            parts = [part.strip() for part in value.split(',')]
+            if len(parts) != 3:
+                logging.warning(f"Skipping malformed rule '{key}': Rule must have 3 parts (column, operator, value).")
+                continue
 
-    Returns:
-        Config: 一个包含所有配置信息的对象。
-    """
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"配置文件未找到: {path}")
+            column, operator, val_str = parts
+            
+            # For 'in' and 'not_in', the value can be a comma-separated list within the value part
+            if operator in ['in', 'not_in']:
+                value = [v.strip() for v in val_str.split(',')]
+            else:
+                value = val_str
+
+            rules.append({'column': column, 'operator': operator, 'value': value})
         
-    parser = configparser.ConfigParser()
-    parser.read(path, encoding='utf-8')
-    return Config(parser) 
+        return rules
+
+def load_config(path: str) -> Config:
+    """Loads config from the given path and returns a Config object."""
+    if not path:
+        raise ValueError("Config file path cannot be empty.")
+    
+    config_data = configparser.ConfigParser(inline_comment_prefixes=';')
+    try:
+        config_data.read(path, encoding='utf-8')
+    except FileNotFoundError:
+        logging.error(f"Config file not found at: {path}")
+        raise
+        
+    return Config(config_data) 
