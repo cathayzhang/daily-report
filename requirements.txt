@@ -4,4 +4,7 @@ plotly
 # matplotlib is being replaced by plotly
 # openpyxl is required by pandas to read .xlsx files
 openpyxl
-markdown 
+markdown
+Flask
+# Use Waitress as a production-ready WSGI server
+waitress 

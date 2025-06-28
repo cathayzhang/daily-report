@@ -202,7 +202,7 @@
             <div class="grid-col-full card">
                 <h2><i class="fas fa-exclamation-triangle"></i> 高风险问题清单</h2>
                 <details class="collapsible-table" open>
-                    <summary>动态高风险问题 ({{ context.analysis.high_risk_issues|length }} 个)</summary>
+                    <summary>动态高风险问题 ({{ context.analysis.high_risk_issues|length }} 个) <small class="text-muted" style="font-weight: normal;">- {{ context.analysis.high_risk_title }}</small></summary>
                     <div class="table-content">
                         {% if context.analysis.high_risk_issues %}
                         <table class="risk-table-datatable display" style="width:100%">
@@ -219,7 +219,7 @@
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.priority }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                    <td contenteditable="true" class="editable-remark" data-jira-key="{{ issue.key }}">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -247,7 +247,7 @@
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                    <td contenteditable="true" class="editable-remark" data-jira-key="{{ issue.key }}">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -259,7 +259,7 @@
                 </details>
 
                 <details class="collapsible-table">
-                    <summary>A类问题 ({{ context.analysis.a_priority_issues|length }} 个)</summary>
+                    <summary>A类问题清单 ({{ context.analysis.a_priority_issues|length }} 个)</summary>
                     <div class="table-content">
                         {% if context.analysis.a_priority_issues %}
                         <table class="risk-table-datatable display" style="width:100%">
@@ -275,13 +275,13 @@
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                    <td contenteditable="true" class="editable-remark" data-jira-key="{{ issue.key }}">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
                         {% else %}
-                        <p>当前无A类问题。</p>
+                        <p>太棒了！当前没有A类问题。</p>
                         {% endif %}
                     </div>
                 </details>
@@ -376,76 +376,85 @@
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
     <script>
+    // --- DataTables Initialization with Column Filters ---
     $(document).ready(function() {
         $('.risk-table-datatable').each(function() {
-            // Setup - add a text input to each header cell for filtering
-            $(this).find('thead .filters th').each(function () {
-                var title = $(this).text();
-                // The last column ('备注') should not have a filter.
-                if (title) {
-                     $(this).html('<input type="text" placeholder="筛选 ' + title + '" />');
-                }
-            });
-
             var table = $(this).DataTable({
-                "pageLength": 10,
-                "lengthMenu": [ [10, 25, 50, -1], [10, 25, 50, "全部"] ],
-                "language": {
-                    "search": "全局筛选:",
-                    "lengthMenu": "每页显示 _MENU_ 条",
-                    "zeroRecords": "未找到匹配的记录",
-                    "info": "显示第 _START_ 至 _END_ 条，共 _TOTAL_ 条",
-                    "infoEmpty": "显示 0 条记录",
-                    "infoFiltered": "(由 _MAX_ 条记录筛选)",
-                    "paginate": { "first": "首页", "last": "末页", "next": "下一页", "previous": "上一页" }
-                },
-                "initComplete": function () {
-                    this.api().columns().every(function () {
-                        var that = this;
-                        $('input', this.header()).on('keyup change clear', function () {
-                            if (that.search() !== this.value) {
-                                that.search(this.value).draw();
-                            }
-                        });
-                    });
-                }
+                orderCellsTop: true,
+                fixedHeader: true,
+                paging: false, // Disable pagination
+                info: false // Disable "Showing X of Y entries"
             });
 
-            // --- Begin script for editable notes ---
-            const setupEditableNotes = () => {
-                const cells = table.cells('td.editable-note', { page: 'current' }).nodes();
-                cells.to$().attr('contenteditable', 'true').each(function() {
-                    const cell = this;
-                    const row = table.row(cell).node();
-                    const keyCell = $(row).find('td:first-child a');
-                    if (!keyCell.length) return;
-                    
-                    const issueKey = keyCell.text();
-                    const storageKey = `note-${issueKey}`;
+            // Clone the header row and append it as a footer for filtering
+            var header = $(this).find('thead tr.filters').clone(true);
+            header.appendTo($(this).find('tfoot'));
 
-                    // Load saved note
-                    const savedNote = localStorage.getItem(storageKey);
-                    if (savedNote) {
-                        $(cell).text(savedNote);
+            // Setup the column filters
+            $(this).find('thead tr.filters th').each(function(i) {
+                var title = $(this).text();
+                $(this).html('<input type="text" placeholder="搜索 ' + title + '" />');
+
+                $('input', this).on('keyup change', function() {
+                    if (table.column(i).search() !== this.value) {
+                        table.column(i).search(this.value).draw();
                     }
-
-                    // Save note on blur
-                    $(cell).on('blur', function() {
-                        localStorage.setItem(storageKey, $(this).text());
-                    });
                 });
-            };
-
-            // Initial setup
-            setupEditableNotes();
-
-            // Re-run setup on table draw events (pagination, search)
-            table.on('draw', function() {
-                setupEditableNotes();
             });
-            // --- End script for editable notes ---
+        });
+    });
+    </script>
+    
+    <script>
+    // --- Editable Remarks with API call ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const editableCells = document.querySelectorAll('.editable-remark');
+
+        editableCells.forEach(cell => {
+            const originalColor = cell.style.backgroundColor;
+
+            cell.addEventListener('blur', function() {
+                const jiraKey = this.dataset.jiraKey;
+                const newRemark = this.innerText;
+                const originalRemark = this.dataset.originalValue || '';
+
+                if (newRemark.trim() === originalRemark.trim()) {
+                    return;
+                }
+                
+                this.style.backgroundColor = '#fffbdd'; // Saving...
+
+                fetch('/api/remark/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jira_key: jiraKey, remark: newRemark }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.style.backgroundColor = '#d4edda'; // Success
+                        this.dataset.originalValue = newRemark;
+                    } else {
+                        this.style.backgroundColor = '#f8d7da'; // Error
+                    }
+                })
+                .catch(() => {
+                    this.style.backgroundColor = '#f8d7da'; // Network/Server Error
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        this.style.transition = 'background-color 0.5s';
+                        this.style.backgroundColor = originalColor;
+                    }, 2000);
+                });
+            });
+
+            cell.addEventListener('focus', function() {
+                this.dataset.originalValue = this.innerText;
+            });
         });
     });
     </script>
