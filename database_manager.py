@@ -23,8 +23,7 @@ def init_db():
     CREATE_JIRA_REMARKS_TABLE_SQL = """
     CREATE TABLE IF NOT EXISTS jira_remarks (
         jira_key TEXT PRIMARY KEY,    -- JIRA 问题唯一标识 (例如: 'PROJ-123')
-        remarks TEXT,                 -- 备注的具体内容
-        last_updated TEXT             -- 备注最后更新时间 (格式: ISO 8601)
+        remark TEXT                   -- 备注的具体内容
     );
     """
     

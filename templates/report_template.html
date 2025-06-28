@@ -56,6 +56,9 @@
     .header p {
         /* ... existing styles ... */
     }
+    .table-content {
+        overflow-x: auto;
+    }
 </style>
 </head>
 <body>
@@ -199,6 +202,35 @@
             <div class="grid-col-full card">
                 <h2><i class="fas fa-exclamation-triangle"></i> 高风险问题清单</h2>
                 <details class="collapsible-table" open>
+                    <summary>动态高风险问题 ({{ context.analysis.high_risk_issues|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.high_risk_issues %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Priority</th><th>Age(days)</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>Priority</th><th>Age(days)</th><th>备注</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for issue in context.analysis.high_risk_issues %}
+                                <tr>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td>{{ issue.priority }}</td>
+                                    <td>{{ issue.age }}</td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>根据当前配置规则，无动态高风险问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table" open>
                     <summary>超期问题 ({{ context.analysis.overdue_issues|length }} 个)</summary>
                     <div class="table-content">
                         {% if context.analysis.overdue_issues %}
@@ -215,7 +247,7 @@
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note"></td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -225,8 +257,8 @@
                         {% endif %}
                     </div>
                 </details>
-                
-                <details class="collapsible-table" open>
+
+                <details class="collapsible-table">
                     <summary>A类问题 ({{ context.analysis.a_priority_issues|length }} 个)</summary>
                     <div class="table-content">
                         {% if context.analysis.a_priority_issues %}
@@ -243,13 +275,67 @@
                                     <td>{{ issue.assignee }}</td>
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note"></td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
                         {% else %}
                         <p>当前无A类问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table">
+                    <summary>当日新增A类问题 ({{ context.analysis.new_a_issues_today|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.new_a_issues_today %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for issue in context.analysis.new_a_issues_today %}
+                                <tr>
+                                    <td><a href="{{ issue.jira_url }}" target="_blank">{{ issue.key }}</a></td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>今日无新增A类问题。</p>
+                        {% endif %}
+                    </div>
+                </details>
+                
+                <details class="collapsible-table">
+                    <summary>当日关闭A类问题 ({{ context.analysis.closed_a_issues_today|length }} 个)</summary>
+                    <div class="table-content">
+                        {% if context.analysis.closed_a_issues_today %}
+                        <table class="risk-table-datatable display" style="width:100%">
+                            <thead>
+                                <tr><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                                <tr class="filters"><th>Key</th><th>Summary</th><th>Assignee</th><th>Status</th><th>备注</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for issue in context.analysis.closed_a_issues_today %}
+                                <tr>
+                                    <td><a href="{{ issue.jira_url }}" target_blank">{{ issue.key }}</a></td>
+                                    <td>{{ issue.summary }}</td>
+                                    <td>{{ issue.assignee }}</td>
+                                    <td>{{ issue.status }}</td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p>今日无关闭A类问题。</p>
                         {% endif %}
                     </div>
                 </details>
@@ -272,7 +358,7 @@
                                     <td>{{ issue.status }}</td>
                                     <td>{{ issue.tags }}</td>
                                     <td>{{ issue.age }}</td>
-                                    <td class="editable-note"></td>
+                                    <td class="editable-note">{{ context.all_remarks.get(issue.key, '') }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>

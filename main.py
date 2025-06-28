@@ -17,6 +17,7 @@ import history_manager
 import visualizer
 import report_generator
 import database_manager
+from remarks_manager import RemarksManager
 
 # 设置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -47,6 +48,12 @@ def main():
         logging.info("正在初始化数据库...")
         database_manager.init_db()
         logging.info("数据库初始化完成。")
+
+        # 新增步骤：同步JIRA问题备注
+        logging.info("正在从 remarks.csv 同步JIRA问题备注...")
+        remarks_manager = RemarksManager()
+        remarks_manager.sync_remarks_from_csv()
+        logging.info("JIRA问题备注同步完成。")
 
         # 1. 加载配置
         logging.info(f"正在从 '{args.config}' 加载配置...")
@@ -109,18 +116,20 @@ def main():
         )
         logging.info("交互式图表HTML生成完成。")
 
-        # 8. 准备报告上下文
+        # 8. 获取备注信息以供报告使用
+        all_remarks = remarks_manager.get_all_remarks()
+
+        # 9. 准备报告上下文
         report_context = {
             "project_name": config.project_name,
             "analysis": analysis_results,
             "charts": charts_html, # 这里现在是包含HTML的字典
+            "all_remarks": all_remarks, # 新增备注字典
             "data_file": os.path.basename(args.input_file),
             "config_file": args.config,
-            "historical_plans": config.historical_plans,
-            "burnup_plans": config.burnup_plans,
         }
 
-        # 9. 生成最终报告
+        # 10. 生成最终报告
         logging.info(f"开始生成HTML报告，输出至 '{config.report_output_dir}'...")
         report_path = report_generator.generate_report(
             report_context,
