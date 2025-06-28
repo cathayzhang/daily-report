@@ -107,9 +107,8 @@ def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -
     }
     kpis['class_counts'] = class_counts
 
-    # 计算DI分数 (使用新的分类方式)
-    d_count = priority_counts.get('Low', 0) # 'Low' 通常不计入C类，单独处理
-    di_score = round(class_counts['A'] * 10 + class_counts['B'] * 3 + class_counts['C'] * 1 + d_count * 0.1)
+    # 计算DI分数 (根据用户最新要求调整)
+    di_score = round(class_counts['A'] * 10 + class_counts['B'] * 10 + class_counts['C'] * 10)
     kpis['di_score'] = di_score
 
     return kpis

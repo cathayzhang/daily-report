@@ -3,6 +3,7 @@ import sys
 import logging
 import os
 import markdown
+from datetime import date
 
 # 动态地将当前目录添加到sys.path，以帮助Python找到其他模块
 # 这在直接从IDE或命令行运行脚本时特别有用
@@ -15,6 +16,7 @@ import analyzer
 import history_manager
 import visualizer
 import report_generator
+import database_manager
 
 # 设置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,6 +43,11 @@ def main():
     args = arg_parser.parse_args()
 
     try:
+        # 0. 初始化数据库
+        logging.info("正在初始化数据库...")
+        database_manager.init_db()
+        logging.info("数据库初始化完成。")
+
         # 1. 加载配置
         logging.info(f"正在从 '{args.config}' 加载配置...")
         config = load_config(args.config)
@@ -52,9 +59,8 @@ def main():
         logging.info(f"数据加载成功，共加载 {len(df)} 条记录。")
 
         # 3. 加载历史数据（在分析前）
-        logging.info("加载历史数据以供分析...")
-        history_mgr = history_manager.HistoryManager(config.history_path)
-        history_df = history_mgr.history_df # 获取当前的历史数据
+        logging.info("从数据库加载历史数据以供分析...")
+        history_df = history_manager.load_kpi_history()
         logging.info(f"成功加载 {len(history_df)} 条历史记录。")
 
         # 4. 核心分析 (现在传入了历史数据)
@@ -77,39 +83,21 @@ def main():
             pass
 
         # 6. 更新历史数据 (使用新的分析结果)
-        logging.info(f"正在更新历史数据文件: {config.history_path}...")
-        # 从分析结果中提取需要记录到历史的指标
-        # 未来这里可以扩展，记录更多每日快照
-        metrics_to_save = {}
-
-        # 记录总体和各优先级问题数
-        metrics_to_save['total'] = analysis_results.get('overall_metrics', {}).get('total_issues', 0)
-        priority_dist = analysis_results.get('priority_distribution', {})
-        for priority, count in priority_dist.items():
-            metrics_to_save[priority] = count
+        logging.info("正在保存当日KPI到数据库...")
         
-        # 记录A/B/C类问题总数
-        class_counts = analysis_results.get('kpis', {}).get('class_counts', {})
-        for class_name, count in class_counts.items():
-            metrics_to_save[class_name] = count
-            
-        # 记录DI值
-        metrics_to_save['DI'] = analysis_results.get('kpis', {}).get('di_score', 0)
-
-        # 扩展：记录Top 5模块的问题数
-        module_dist = analysis_results.get('module_distribution', {})
-        if module_dist:
-            # 按问题数降序排序，并取前5个
-            top_5_modules = sorted(module_dist.items(), key=lambda item: item[1], reverse=True)[:5]
-            for module_name, count in top_5_modules:
-                # 为了CSV列名稳定，对模块名进行清洗，并添加前缀
-                clean_module_name = f"module_{''.join(filter(str.isalnum, module_name))}"
-                metrics_to_save[clean_module_name] = count
-
-        history_mgr.add_record(metrics_to_save)
-        history_mgr.save()
+        today = date.today()
+        kpis_to_save = {
+            'total_issues': analysis_results.get('overall_metrics', {}).get('total_issues', 0),
+            'A级': analysis_results.get('kpis', {}).get('class_counts', {}).get('A级', 0),
+            'B级': analysis_results.get('kpis', {}).get('class_counts', {}).get('B级', 0),
+            'C级': analysis_results.get('kpis', {}).get('class_counts', {}).get('C级', 0),
+            'di_value': analysis_results.get('kpis', {}).get('di_score', 0)
+        }
+        
+        history_manager.save_kpis(today, kpis_to_save)
+        
         # 获取更新 *后* 的历史数据，用于图表生成
-        updated_history_df = history_mgr.history_df
+        updated_history_df = history_manager.load_kpi_history()
         logging.info("历史数据更新完成。")
 
         # 7. 生成可视化图表 (HTML)
