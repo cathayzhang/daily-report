@@ -37,115 +37,6 @@ def _setup_matplotlib_for_chinese():
     plt.rcParams['axes.unicode_minus'] = False
 
 
-def get_trend_chart_data(history_df: pd.DataFrame) -> str:
-    """
-    根据历史数据准备用于 Chart.js 的趋势图数据。
-
-    Args:
-        history_df: 包含历史数据的 DataFrame。
-
-    Returns:
-        一个包含图表配置和数据的 JSON 字符串。
-    """
-    if history_df is None or history_df.empty:
-        return None
-
-    history_df['date'] = pd.to_datetime(history_df['date'])
-    history_df = history_df.sort_values('date')
-
-    chart_data = {
-        "type": "line",
-        "data": {
-            "labels": history_df['date'].dt.strftime('%Y-%m-%d').tolist(),
-            "datasets": [
-                {
-                    "label": "总问题数",
-                    "data": history_df['total_issues'].tolist(),
-                    "borderColor": "rgba(54, 162, 235, 1)",
-                    "backgroundColor": "rgba(54, 162, 235, 0.2)",
-                    "fill": True,
-                    "tension": 0.1
-                },
-                {
-                    "label": "已解决数",
-                    "data": history_df['resolved_issues'].tolist(),
-                    "borderColor": "rgba(75, 192, 192, 1)",
-                    "backgroundColor": "rgba(75, 192, 192, 0.2)",
-                    "fill": True,
-                    "tension": 0.1
-                }
-            ]
-        },
-        "options": {
-            "responsive": True,
-            "plugins": {
-                "title": {
-                    "display": True,
-                    "text": "问题数量趋势分析"
-                }
-            }
-        }
-    }
-    return json.dumps(chart_data)
-
-
-def get_module_distribution_chart_data(module_data: dict) -> str:
-    """
-    根据模块数据准备用于 Chart.js 的分布图数据。
-
-    Args:
-        module_data: 包含模块及其问题计数的字典。
-
-    Returns:
-        一个包含图表配置和数据的 JSON 字符串。
-    """
-    if not module_data:
-        return None
-
-    module_series = pd.Series(module_data).sort_values(ascending=False)
-    
-    background_colors = [
-        'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)',
-        'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)',
-        'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
-        'rgba(199, 199, 199, 0.8)', 'rgba(83, 102, 255, 0.8)'
-    ]
-    border_colors = [
-        'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
-        'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)'
-    ]
-
-
-    chart_data = {
-        "type": "doughnut",
-        "data": {
-            "labels": module_series.index.tolist(),
-            "datasets": [{
-                "label": "问题数量",
-                "data": module_series.values.tolist(),
-                "backgroundColor": background_colors,
-                "borderColor": border_colors,
-                "borderWidth": 1
-            }]
-        },
-        "options": {
-            "responsive": True,
-            "plugins": {
-                "legend": {
-                    "position": 'top',
-                },
-                "title": {
-                    "display": True,
-                    "text": '各模块问题分布情况'
-                }
-            }
-        }
-    }
-    return json.dumps(chart_data)
-
-
 def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -> dict:
     """
     生成所有需要的 Plotly 图表 HTML。
@@ -226,9 +117,9 @@ def generate_all_charts(analysis_data: dict, history_df: pd.DataFrame, config) -
 
 def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str:
     """
-    Generate Plotly trend chart HTML from history data.
+    Generate Plotly trend chart for DI value from history data.
     """
-    if history_df is None or history_df.empty or 'total' not in history_df.columns:
+    if history_df is None or history_df.empty or 'di_value' not in history_df.columns:
         return None
 
     history_df['date'] = pd.to_datetime(history_df['date'])
@@ -236,111 +127,70 @@ def _get_trend_chart_html(history_df: pd.DataFrame, a_priority_name: str) -> str
 
     fig = go.Figure()
 
-    # 总问题趋势
+    # DI值趋势
     fig.add_trace(go.Scatter(
         x=history_df['date'],
-        y=history_df['total'],
+        y=history_df['di_value'],
         mode='lines+markers',
-        name='Total Issues',
-        line=dict(color='rgba(54, 162, 235, 1)'),
+        name='DI值',
+        line=dict(color='rgba(75, 192, 192, 1)'),
         fill='tozeroy',
-        fillcolor='rgba(54, 162, 235, 0.2)',
+        fillcolor='rgba(75, 192, 192, 0.2)',
     ))
 
-    # A类问题趋势
-    if a_priority_name in history_df.columns:
-        fig.add_trace(go.Scatter(
-            x=history_df['date'],
-            y=history_df[a_priority_name],
-            mode='lines+markers',
-            name=f'{a_priority_name} Issues',
-            line=dict(color='rgba(255, 99, 132, 1)'),
-            fill='tozeroy',
-            fillcolor='rgba(255, 99, 132, 0.2)',
-        ))
-
-    if 'resolved' in history_df.columns:
-        fig.add_trace(go.Scatter(
-            x=history_df['date'],
-            y=history_df['resolved'],
-            mode='lines+markers',
-            name='Resolved Issues',
-            line=dict(color='rgba(75, 192, 192, 1)'),
-            fill='tozeroy',
-            fillcolor='rgba(75, 192, 192, 0.2)',
-        ))
-
     fig.update_layout(
-        title_text="",
-        xaxis_title="",
-        yaxis_title="",
-        height=160,
-        margin=dict(t=20, l=40, r=20, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        title_text='<b>DI值历史趋势</b>',
+        xaxis_title='日期',
+        yaxis_title='DI值',
+        legend_title_text='指标',
+        hovermode='x unified',
+        height=240,
+        margin=dict(l=40, r=20, t=40, b=40)
     )
-    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+    
+    return pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
 
 
 def _get_module_distribution_chart_html(module_data: dict) -> str:
-    """
-    Generate Plotly horizontal bar chart HTML from module data.
-    """
     if not module_data:
         return None
-
-    module_series = pd.Series(module_data).sort_values(ascending=True)
-
-    fig = go.Figure()
-
-    fig.add_trace(go.Bar(
-        y=module_series.index,
-        x=module_series.values,
-        text=module_series.values,
-        textposition='auto',
-        orientation='h',
-        marker_color='rgba(54, 162, 235, 0.8)',
-        marker_line_color='rgba(54, 162, 235, 1)',
-        marker_line_width=1.5,
-    ))
-
+    
+    modules = list(module_data.keys())
+    counts = list(module_data.values())
+    
+    fig = go.Figure([go.Bar(y=modules, x=counts, orientation='h')])
     fig.update_layout(
-        title_text="",
-        xaxis_title="问题数量",
-        yaxis_title="模块",
+        title_text='', 
+        xaxis_title='问题数量', 
+        yaxis_title='模块',
         height=240,
         margin=dict(l=100, r=20, t=20, b=40),
         xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
         showlegend=False
     )
-    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+    fig.update_yaxes(autorange="reversed")
+    return pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
 
 def _get_priority_distribution_chart_html(priority_data: dict) -> str:
-    """
-    Generate Plotly pie chart HTML from priority data.
-    """
     if not priority_data:
         return None
 
-    priority_series = pd.Series(priority_data).sort_values(ascending=False)
+    priority_data = {k: v for k, v in priority_data.items() if v > 0}
+    if not priority_data: return None
 
-    fig = go.Figure(data=[go.Pie(
-        labels=priority_series.index,
-        values=priority_series.values,
-        hole=.3,
-        hoverinfo='label+percent',
-        textinfo='label+percent'
-    )])
-
+    labels = list(priority_data.keys())
+    values = list(priority_data.values())
+    
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3)])
     fig.update_layout(
-        title_text="",
-        margin=dict(t=20, l=20, r=20, b=20),
+        title_text='',
         height=240,
+        margin=dict(t=20, l=20, r=20, b=20),
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
     )
-
-    return pio.to_html(fig, full_html=False, include_plotlyjs=False)
+    return pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
 
 def _get_burnup_chart_html(history_df: pd.DataFrame, plans: list, title: str, yaxis_title: str) -> str:
     """
@@ -362,6 +212,13 @@ def _get_burnup_chart_html(history_df: pd.DataFrame, plans: list, title: str, ya
         'rgba(75, 192, 192, 1)',  # Teal
         'rgba(153, 102, 255, 1)'  # Purple
     ]
+
+    metric_mapping = {
+        'A': 'a_issues',
+        'B': 'b_issues',
+        'C': 'c_issues',
+        'DI': 'di_value'
+    }
 
     for i, plan in enumerate(plans):
         color = colors[i % len(colors)]
@@ -388,20 +245,21 @@ def _get_burnup_chart_html(history_df: pd.DataFrame, plans: list, title: str, ya
         ))
 
         # 2. 绘制实际值线 (实线)
-        if metric_name in history_df.columns:
-            actual_data = history_df[history_df['date'].between(plan_start_date, plan_end_date)]
-            if not actual_data.empty:
-                fig.add_trace(go.Scatter(
-                    x=actual_data['date'],
-                    y=actual_data[metric_name],
-                    mode='lines+markers',
-                    name=f"实际: {plan_name}",
-                    line=dict(color=color),
-                    legendgroup=plan_name,
-                ))
-        else:
-            print(f"警告：在历史数据中未找到指标 '{metric_name}'，无法绘制实际曲线。")
+        actual_metric_col = metric_mapping.get(plan['metric'])
+        
+        if not actual_metric_col or actual_metric_col not in history_df.columns:
+            print(f"警告：在历史数据中未找到指标列 '{actual_metric_col}'，跳过燃尽图中的此指标。")
+            continue
 
+        actual_trace = go.Scatter(
+            x=history_df['date'],
+            y=history_df[actual_metric_col],
+            mode='lines+markers',
+            name=f"{plan['metric']} - 实际值",
+            line=dict(dash='solid'),
+            legendgroup=plan['metric'],
+        )
+        fig.add_trace(actual_trace)
 
     fig.update_layout(
         title=go.layout.Title(
@@ -446,10 +304,10 @@ def _get_risk_module_bar_chart_html(top_3_modules: list) -> str:
         xaxis_title="风险问题占比 (%)",
         yaxis_title="模块",
         height=240,
-        margin=dict(l=20, r=20, t=40, b=20),
+        margin=dict(l=40, r=40, t=40, b=40),
         xaxis=dict(showgrid=True, zeroline=True, showticklabels=True),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=True),
         showlegend=False
     )
 
-    return pio.to_html(fig, full_html=False, include_plotlyjs=False) 
+    return pio.to_html(fig, full_html=False, include_plotlyjs='cdn') 

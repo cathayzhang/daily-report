@@ -46,8 +46,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>{{ context.project_name }}开发日报</h1>
-        <p style="text-align: center; color: #666;">报告生成时间: {{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
+        <div class="header">
+            <h1>{{ context.project_name }}</h1>
+            <p class="subtitle">{{ context.report_date }} | 数据来源: {{ context.data_file }}</p>
+        </div>
 
         {% set kpis = context.analysis.kpis %}
         {# 预先定义颜色变量以避免linter在style属性中报错 #}
@@ -74,11 +76,13 @@
                 <!-- Card 2: 7-Day Change -->
                 <div class="kpi-card-large" style="grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between; text-align: center;">
                     <div class="kpi-title-large">A类问题7日变化</div>
-                    <div class="kpi-value-large" style="color: {{ kpis.weekly_change_color }}; padding: 0.1em 0;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="kpi-context" style="color: {{ kpis.weekly_change_color }}; font-weight: bold;">
-                        {% if kpis.a_issues_7_day_change > 0 %}+{% endif %}{{ kpis.a_issues_7_day_change }}
+                    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
+                        <div class="kpi-value-large" style="color: {{ kpis.weekly_change_color }};">
+                            <i class="fas fa-chart-line"></i>
+                            <span style="margin-left: 0.5em;">
+                                {% if kpis.a_issues_7_day_change > 0 %}+{% endif %}{{ kpis.a_issues_7_day_change }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <!-- Card 3: JIRA/DI -->
