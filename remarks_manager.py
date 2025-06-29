@@ -54,4 +54,39 @@ class RemarksManager:
                 remarks_dict = {row[0]: row[1] for row in rows}
         except Exception as e:
             print(f"从数据库获取备注失败: {e}")
-        return remarks_dict 
+        return remarks_dict
+
+    def update_remark(self, jira_key, new_remark, csv_path='remarks.csv'):
+        """
+        Updates a remark in both the database and the CSV file.
+
+        Args:
+            jira_key (str): The JIRA key of the issue.
+            new_remark (str): The new remark text.
+            csv_path (str): The path to the remarks CSV file.
+        
+        Returns:
+            bool: True if update was successful, False otherwise.
+        """
+        try:
+            # 1. Update the database
+            with sqlite3.connect(DB_FILE) as conn:
+                cursor = conn.cursor()
+                query = "INSERT OR REPLACE INTO jira_remarks (jira_key, remark) VALUES (?, ?)"
+                cursor.execute(query, (jira_key, new_remark))
+                conn.commit()
+            
+            # 2. Update the CSV file
+            # Read all data from DB to ensure CSV is a full reflection of the DB state.
+            all_remarks = self.get_all_remarks()
+            # It's possible the key was just added, so update the local dict
+            all_remarks[jira_key] = new_remark
+            
+            remarks_df = pd.DataFrame(list(all_remarks.items()), columns=['jira_key', 'remark'])
+            remarks_df.to_csv(csv_path, index=False, encoding='utf-8')
+            
+            print(f"成功更新备注 {jira_key} 并同步到 {csv_path}。")
+            return True
+        except Exception as e:
+            print(f"更新备注失败 for key {jira_key}: {e}")
+            return False 

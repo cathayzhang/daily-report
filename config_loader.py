@@ -11,6 +11,7 @@ class Config:
         self.column_mapping = dict(self._config.items('column_mapping'))
         
         # --- Settings ---
+        self.input_file = self._config.get('settings', 'input_file', fallback=None)
         self.jira_base_url = self._config.get('settings', 'jira_base_url', fallback='https://your-jira-instance.com/browse/')
         
         # --- Report ---

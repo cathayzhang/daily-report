@@ -6,6 +6,37 @@ from config_loader import Config
 from datetime import datetime, timedelta, date
 import numpy as np
 
+def format_rules_to_title(rules: list) -> str:
+    """将规则列表格式化为人类可读的标题字符串。"""
+    if not rules:
+        return "无动态筛选规则"
+    
+    parts = []
+    for rule in rules:
+        col = rule.get('column', '?')
+        op = rule.get('operator', '?')
+        val = rule.get('value', '?')
+        
+        op_map = {
+            'equals': '为',
+            'not_equals': '不为',
+            'contains': '包含',
+            'not_in': '不为',
+            '>': '>',
+            '<': '<'
+        }
+        op_str = op_map.get(op, op)
+        
+        # 对于 in/not_in 操作符，值可能是列表，格式化一下
+        if isinstance(val, list):
+            val_str = f"({', '.join(map(str, val))})"
+        else:
+            val_str = str(val)
+            
+        parts.append(f"{col} {op_str} {val_str}")
+        
+    return "规则: " + ", 且 ".join(parts)
+
 def calculate_kpis(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -> dict:
     """
     计算报告所需的核心KPI指标。
@@ -320,34 +351,45 @@ def get_class_counts(df: pd.DataFrame, config: 'Config') -> dict:
     }
 
 def analyze(df: pd.DataFrame, history_df: pd.DataFrame, config: Config) -> dict:
-    df['created_date'] = pd.to_datetime(df['created_date'])
-    now_naive = pd.Timestamp.now().tz_localize(None)
-    df['age'] = (now_naive - df['created_date'].dt.tz_localize(None)).dt.days
+    """
+    执行所有分析步骤并返回一个包含所有结果的字典。
+    """
+    # V2.0 新增：计算问题存在天数(age)
+    if 'created_date' in df.columns:
+        df['created_date'] = pd.to_datetime(df['created_date'])
+        now_naive = pd.Timestamp.now().tz_localize(None)
+        # 确保 created_date 也是 naive datetime
+        df['age'] = (now_naive - df['created_date'].dt.tz_localize(None)).dt.days
+    else:
+        # 如果没有创建日期列，则无法计算age，可以填充为0或进行其他处理
+        df['age'] = 0
 
-    a_priority_name = config.a_priority_name
-    
-    # Prepare a_priority_issues dataframe
-    a_priority_df = df[df['priority'] == a_priority_name].copy()
-    if config.jira_base_url and 'key' in a_priority_df.columns:
-        a_priority_df['jira_url'] = a_priority_df['key'].apply(lambda k: f"{config.jira_base_url.rstrip('/')}/{k}")
-
-    # V3.0 P3 新增：获取动态高风险问题
-    high_risk_df = get_high_risk_issues(df, config.high_risk_rules).copy()
+    # 动态筛选高风险问题
+    high_risk_df = get_high_risk_issues(df, config.high_risk_rules)
     if config.jira_base_url and 'key' in high_risk_df.columns:
         high_risk_df['jira_url'] = high_risk_df['key'].apply(lambda k: f"{config.jira_base_url.rstrip('/')}/{k}")
 
+    # 获取A类问题，用于独立表格展示
+    a_priority_df = df[df['priority'] == config.a_priority_name].copy()
+    if config.jira_base_url and 'key' in a_priority_df.columns:
+        a_priority_df['jira_url'] = a_priority_df['key'].apply(lambda k: f"{config.jira_base_url.rstrip('/')}/{k}")
+
+    # 构建完整的分析结果字典
     analysis_results = {
         "overall_metrics": analyze_overall_metrics(df),
         "priority_distribution": analyze_priority_distribution(df),
         "status_distribution": analyze_status_distribution(df),
         "module_distribution": analyze_module_distribution(df),
         "overdue_issues": analyze_overdue_issues(df, config),
+        "high_risk_issues": high_risk_df.to_dict('records'),
+        "high_risk_title": format_rules_to_title(config.high_risk_rules),
         "tagged_issues": analyze_tagged_issues(df, config),
         "a_priority_issues": a_priority_df.to_dict('records'),
-        "high_risk_issues": high_risk_df.to_dict('records')
+        "kpis": calculate_kpis(df, history_df, config),
+        "burnup_plans": config.burnup_plans if config.burnup_plans else []
     }
 
-    kpis = calculate_kpis(df, history_df, config)
-    analysis_results['kpis'] = kpis
-    analysis_results['generated_text_html'] = generate_detailed_analysis_html(kpis)
+    # 生成并添加自动分析的HTML内容
+    analysis_results['generated_text_html'] = generate_detailed_analysis_html(analysis_results['kpis'])
+    
     return analysis_results 
